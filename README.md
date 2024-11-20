@@ -1,0 +1,1 @@
+# parasoft-coverage-action
