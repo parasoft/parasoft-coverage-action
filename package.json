@@ -1,0 +1,48 @@
+{
+  "name": "parasoft-coverage-action",
+  "version": "1.0.0",
+  "description": "A GitHub Action for deploying Parasoft coverage reports and review results on GitHub.",
+  "main": "lib/main.js",
+  "scripts": {
+    "compile": "npx tsc -p ./",
+    "watch": "npx tsc -watch -p ./",
+    "lint": "npx eslint . --ext .ts -f checkstyle -o eslint/eslint-report.xml || true",
+    "test": "nyc mocha",
+    "package": "ncc build --license licenses.txt",
+    "clean": "rimraf ./dist ./lib ./eslint ./coverage ./.nyc_output test-results.xml",
+    "all": "npm run clean && npm run compile && npm run lint && npm run test && npm run package"
+  },
+  "nyc": {
+    "reporter": [
+      "html",
+      "cobertura"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parasoft/parasoft-coverage-action.git"
+  },
+  "author": "Parasoft Corp.",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/parasoft/parasoft-coverage-action/issues"
+  },
+  "homepage": "https://github.com/parasoft/parasoft-coverage-action#readme",
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/sinon": "^17.0.3",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vercel/ncc": "^0.38.1",
+    "eslint": "^8.57.0",
+    "mocha": "^10.3.0",
+    "mocha-junit-reporter": "^2.2.1",
+    "mocha-multi-reporters": "^1.5.1",
+    "nyc": "^15.1.0",
+    "rimraf": "^5.0.5",
+    "should": "^13.2.3",
+    "sinon": "^17.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+}
