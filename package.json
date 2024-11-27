@@ -9,7 +9,7 @@
     "watch": "npx tsc -watch -p ./",
     "lint": "npx eslint . --ext .ts -f checkstyle -o eslint/eslint-report.xml || true",
     "test": "nyc mocha",
-    "package": "ncc build",
+    "package": "ncc build --license licenses.txt",
     "clean": "rimraf ./dist ./lib ./eslint ./coverage ./.nyc_output test-results.xml",
     "all": "npm run clean && npm run compile && npm run lint && npm run test && npm run package"
   },
