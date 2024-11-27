@@ -1,6 +1,7 @@
 {
   "name": "parasoft-coverage-action",
   "version": "1.0.0",
+  "private": true,
   "description": "A GitHub Action for deploying Parasoft coverage reports and review results on GitHub.",
   "main": "lib/main.js",
   "scripts": {
@@ -8,7 +9,7 @@
     "watch": "npx tsc -watch -p ./",
     "lint": "npx eslint . --ext .ts -f checkstyle -o eslint/eslint-report.xml || true",
     "test": "nyc mocha",
-    "package": "ncc build --license licenses.txt",
+    "package": "ncc build",
     "clean": "rimraf ./dist ./lib ./eslint ./coverage ./.nyc_output test-results.xml",
     "all": "npm run clean && npm run compile && npm run lint && npm run test && npm run package"
   },
