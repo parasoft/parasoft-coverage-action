@@ -13,13 +13,18 @@ class CoverageParserRunner {
     // TODO: Implement converting Parasoft coverage XML report to cobertura report
     // TODO: Implement calculating coverage data from the converted report
     async customizeJobRunSummary(coverageNode) {
-        const markdown = this.customizeMarkdownContent(coverageNode.packages);
-        const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
-        return await core.summary
-            .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
-            + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
-            + markdown + "</tbody></table>")
-            .write();
+        try {
+            const markdown = this.customizeMarkdownContent(coverageNode.packages);
+            const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
+            return await core.summary
+                .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
+                + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
+                + markdown + "</tbody></table>")
+                .write();
+        }
+        catch (error) {
+            console.error("An error occurred while customizing the job run summary:", error);
+        }
     }
     customizeMarkdownContent(packagesNode) {
         return Array.from(packagesNode.entries()).map(([packageName, packageNode]) => {
@@ -44,7 +49,13 @@ class CoverageParserRunner {
         return { coveredLines, totalLines, markdownContent };
     }
     formatCoverage(covered, total, rate) {
-        return `${covered}/${total} - ${Math.floor(rate * 100)}%`;
+        if (covered < 0 || total < 0) {
+            throw new Error('The covered lines and total lines must be non-negative.');
+        }
+        if (rate < 0 || rate > 1) {
+            throw new Error('The line rate must be between 0 and 1.');
+        }
+        return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`;
     }
 }
 exports.CoverageParserRunner = CoverageParserRunner;
