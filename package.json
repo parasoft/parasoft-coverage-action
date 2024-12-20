@@ -47,6 +47,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^1.11.1",
+    "string-format": "^2.0.0"
   }
 }

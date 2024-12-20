@@ -1,6 +1,35 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 6250:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.messagesFormatter = exports.messages = void 0;
+const fs = __nccwpck_require__(9896);
+const pt = __nccwpck_require__(6928);
+const format = __nccwpck_require__(2703);
+class Messages {
+    deserialize(jsonPath) {
+        const buf = fs.readFileSync(jsonPath);
+        const json = JSON.parse(buf.toString('utf-8'));
+        return json;
+    }
+}
+class Formatter {
+    format(template, ...args) {
+        return format(template, ...args);
+    }
+}
+const jsonPath = pt.join(__dirname, 'messages/messages.json');
+exports.messages = new Messages().deserialize(jsonPath);
+exports.messagesFormatter = new Formatter();
+//# sourceMappingURL=messages.js.map
+
+/***/ }),
+
 /***/ 1924:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -9,53 +38,137 @@
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CoverageParserRunner = void 0;
 const core = __nccwpck_require__(7484);
+const messages_1 = __nccwpck_require__(6250);
 class CoverageParserRunner {
-    // TODO: Implement converting Parasoft coverage XML report to cobertura report
-    // TODO: Implement calculating coverage data from the converted report
-    async customizeJobRunSummary(coverageNode) {
-        try {
-            const markdown = this.customizeMarkdownContent(coverageNode.packages);
-            const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
-            return await core.summary
-                .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
-                + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
-                + markdown + "</tbody></table>")
-                .write();
-        }
-        catch (error) {
-            console.error("An error occurred while customizing the job run summary:", error);
-        }
+    async run() {
+        // TODO: Simulate coverageNode input for testing the structure implemented in current task
+        const coverageNode = this.getCoverageNode();
+        await this.generateCoverageSummary(coverageNode);
+        return { exitCode: 0 };
     }
-    customizeMarkdownContent(packagesNode) {
-        return Array.from(packagesNode.entries()).map(([packageName, packageNode]) => {
+    async generateCoverageSummary(coverageNode) {
+        if (!coverageNode) {
+            throw new Error(messages_1.messages.invalid_coverage_data);
+        }
+        const markdown = this.generateMarkdownContent(coverageNode.packages);
+        const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
+        await core.summary
+            .addHeading('Parasoft Coverage')
+            .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
+            + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
+            + markdown + "</tbody></table>")
+            .write();
+    }
+    generateMarkdownContent(packagesNode) {
+        if (!packagesNode || packagesNode.size === 0) {
+            throw new Error(messages_1.messages.invalid_coverage_data);
+        }
+        const markdownRows = [];
+        for (const [packageName, packageNode] of packagesNode.entries()) {
             const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(packageNode);
             const packageCoverage = this.formatCoverage(coveredLines, totalLines, packageNode.lineRate);
-            return "<tr><td><details>" +
+            markdownRows.push("<tr><td><details>" +
                 "<summary>" + packageName + "&emsp;(" + packageCoverage + ")</summary>" +
                 "<table><tbody>" + markdownContent + "</tbody></table>" +
-                "</details></td></tr>";
-        }).join('');
+                "</details></td></tr>");
+        }
+        return markdownRows.join('');
     }
     calculatePackageCoverage(packageNode) {
+        if (!packageNode) {
+            throw new Error(messages_1.messages.invalid_coverage_data);
+        }
         let coveredLines = 0;
         let totalLines = 0;
-        let markdownContent = '';
-        packageNode.classes.forEach(classNode => {
+        const markdownRows = [];
+        for (const classNode of packageNode.classes.values()) {
             coveredLines += classNode.coveredLines;
             totalLines += classNode.lines.length;
             const classCoverage = this.formatCoverage(classNode.coveredLines, classNode.lines.length, classNode.lineRate);
-            markdownContent += "<tr><td>&emsp;" + classNode.name + "&emsp;(" + classCoverage + ")</td></tr>";
-        });
-        return { coveredLines, totalLines, markdownContent };
+            markdownRows.push(`<tr><td>&emsp;${classNode.name}&emsp;(${classCoverage})</td></tr>`);
+        }
+        return { coveredLines, totalLines, markdownContent: markdownRows.join('') };
     }
     formatCoverage(covered, total, rate) {
-        if (covered < 0 || total < 0) {
-            throw new Error('The covered lines and total lines must be non-negative.');
-        }
-        if (rate < 0 || rate > 1) {
-            throw new Error('The line rate must be between 0 and 1.');
+        if ((covered < 0 || total < 0)
+            || (covered > total)
+            || (rate < 0 || rate > 1)) {
+            throw new Error(messages_1.messages.invalid_coverage_data);
         }
         return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`;
+    }
+    getCoverageNode() {
+        // Simulate coverage data
+        return {
+            lineRate: 0.6667,
+            linesCovered: 6,
+            linesValid: 9,
+            packages: new Map([
+                [
+                    'com.example.package1', // Package name
+                    {
+                        name: 'com.example.package1',
+                        lineRate: 0.6667,
+                        classes: new Map([
+                            [
+                                'MyClass1.java', // Class file name
+                                {
+                                    classId: 'MyClass1.java|MyClass1', // Combination of filename + class name
+                                    fileName: 'MyClass1.java',
+                                    name: 'MyClass1',
+                                    lineRate: 0.6667,
+                                    coveredLines: 2,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'abc123', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'def456', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'ghi789', hits: 1 },
+                                    ]
+                                }
+                            ],
+                            [
+                                'MyClass2.java',
+                                {
+                                    classId: 'MyClass2.java|MyClass2',
+                                    fileName: 'MyClass2.java',
+                                    name: 'MyClass2',
+                                    lineRate: 0.6667,
+                                    coveredLines: 2,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'jkl012', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'mno345', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'pqr678', hits: 1 }
+                                    ]
+                                }
+                            ]
+                        ])
+                    }
+                ],
+                [
+                    'com.example.package2',
+                    {
+                        name: 'com.example.package2',
+                        lineRate: 0.6667,
+                        classes: new Map([
+                            [
+                                'MyClass3.java',
+                                {
+                                    classId: 'MyClass3.java|MyClass3',
+                                    fileName: 'MyClass3.java',
+                                    name: 'MyClass3',
+                                    lineRate: 0.6667,
+                                    coveredLines: 2,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'stu901', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'vwx234', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'yzab567', hits: 1 }
+                                    ]
+                                }
+                            ]
+                        ])
+                    }
+                ]
+            ])
+        };
     }
 }
 exports.CoverageParserRunner = CoverageParserRunner;
@@ -3254,6 +3367,105 @@ function copyFile(srcFile, destFile, force) {
     });
 }
 //# sourceMappingURL=io.js.map
+
+/***/ }),
+
+/***/ 2703:
+/***/ (function(module) {
+
+void function(global) {
+
+  'use strict';
+
+  //  ValueError :: String -> Error
+  function ValueError(message) {
+    var err = new Error(message);
+    err.name = 'ValueError';
+    return err;
+  }
+
+  //  create :: Object -> String,*... -> String
+  function create(transformers) {
+    return function(template) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      var idx = 0;
+      var state = 'UNDEFINED';
+
+      return template.replace(
+        /([{}])\1|[{](.*?)(?:!(.+?))?[}]/g,
+        function(match, literal, _key, xf) {
+          if (literal != null) {
+            return literal;
+          }
+          var key = _key;
+          if (key.length > 0) {
+            if (state === 'IMPLICIT') {
+              throw ValueError('cannot switch from ' +
+                               'implicit to explicit numbering');
+            }
+            state = 'EXPLICIT';
+          } else {
+            if (state === 'EXPLICIT') {
+              throw ValueError('cannot switch from ' +
+                               'explicit to implicit numbering');
+            }
+            state = 'IMPLICIT';
+            key = String(idx);
+            idx += 1;
+          }
+
+          //  1.  Split the key into a lookup path.
+          //  2.  If the first path component is not an index, prepend '0'.
+          //  3.  Reduce the lookup path to a single result. If the lookup
+          //      succeeds the result is a singleton array containing the
+          //      value at the lookup path; otherwise the result is [].
+          //  4.  Unwrap the result by reducing with '' as the default value.
+          var path = key.split('.');
+          var value = (/^\d+$/.test(path[0]) ? path : ['0'].concat(path))
+            .reduce(function(maybe, key) {
+              return maybe.reduce(function(_, x) {
+                return x != null && key in Object(x) ?
+                  [typeof x[key] === 'function' ? x[key]() : x[key]] :
+                  [];
+              }, []);
+            }, [args])
+            .reduce(function(_, x) { return x; }, '');
+
+          if (xf == null) {
+            return value;
+          } else if (Object.prototype.hasOwnProperty.call(transformers, xf)) {
+            return transformers[xf](value);
+          } else {
+            throw ValueError('no transformer named "' + xf + '"');
+          }
+        }
+      );
+    };
+  }
+
+  //  format :: String,*... -> String
+  var format = create({});
+
+  //  format.create :: Object -> String,*... -> String
+  format.create = create;
+
+  //  format.extend :: Object,Object -> ()
+  format.extend = function(prototype, transformers) {
+    var $format = create(transformers);
+    prototype.format = function() {
+      var args = Array.prototype.slice.call(arguments);
+      args.unshift(this);
+      return $format.apply(global, args);
+    };
+  };
+
+  /* istanbul ignore else */
+  if (true) {
+    module.exports = format;
+  } else {}
+
+}.call(this, this);
+
 
 /***/ }),
 
@@ -27608,83 +27820,32 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
+const core = __nccwpck_require__(7484);
 const runner = __nccwpck_require__(1924);
+const messages_1 = __nccwpck_require__(6250);
 async function run() {
-    const theRunner = new runner.CoverageParserRunner();
-    await theRunner.customizeJobRunSummary(coverageNode);
+    try {
+        // TODO: Add run options (eg., covReportDir) and pass them to run()
+        const theRunner = new runner.CoverageParserRunner();
+        const outcome = await theRunner.run();
+        if (outcome.exitCode != 0) {
+            // TODO: When implement cobertura transforming
+        }
+        else {
+            core.info(messages_1.messagesFormatter.format(messages_1.messages.exit_code + outcome.exitCode));
+        }
+    }
+    catch (error) {
+        core.error(messages_1.messages.run_failed);
+        if (error instanceof Error) {
+            core.error(error);
+            core.setFailed(error.message);
+        }
+        else {
+            core.setFailed(`Unknown error: ${error}`);
+        }
+    }
 }
-// TODO: CICD-962 "Replacing the coverage data in tables in workflow summary"
-// The following is an example for viewing the structure of showing the summary details in workflow
-const coverageNode = {
-    lineRate: 0.85,
-    linesCovered: 170,
-    linesValid: 200,
-    packages: new Map([
-        [
-            'com.example.package1', // Package name
-            {
-                name: 'com.example.package1',
-                lineRate: 0.9,
-                classes: new Map([
-                    [
-                        'MyClass1.java', // Class file name
-                        {
-                            classId: 'MyClass1.java|MyClass1', // Combination of filename + class name
-                            fileName: 'MyClass1.java',
-                            name: 'MyClass1',
-                            lineRate: 0.95,
-                            coveredLines: 19,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'abc123', hits: 1 },
-                                { lineNumber: 2, lineHash: 'def456', hits: 0 },
-                                { lineNumber: 3, lineHash: 'ghi789', hits: 1 },
-                            ]
-                        }
-                    ],
-                    [
-                        'MyClass2.java',
-                        {
-                            classId: 'MyClass2.java|MyClass2',
-                            fileName: 'MyClass2.java',
-                            name: 'MyClass2',
-                            lineRate: 0.80,
-                            coveredLines: 16,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'jkl012', hits: 1 },
-                                { lineNumber: 2, lineHash: 'mno345', hits: 0 },
-                                { lineNumber: 3, lineHash: 'pqr678', hits: 1 }
-                            ]
-                        }
-                    ]
-                ])
-            }
-        ],
-        [
-            'com.example.package2',
-            {
-                name: 'com.example.package2',
-                lineRate: 0.75,
-                classes: new Map([
-                    [
-                        'MyClass3.java',
-                        {
-                            classId: 'MyClass3.java|MyClass3',
-                            fileName: 'MyClass3.java',
-                            name: 'MyClass3',
-                            lineRate: 0.70,
-                            coveredLines: 14,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'stu901', hits: 1 },
-                                { lineNumber: 2, lineHash: 'vwx234', hits: 0 },
-                                { lineNumber: 3, lineHash: 'yzab567', hits: 1 }
-                            ]
-                        }
-                    ]
-                ])
-            }
-        ]
-    ])
-};
 if (require.main === require.cache[eval('__filename')]) {
     run();
 }
