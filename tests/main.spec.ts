@@ -10,7 +10,7 @@ describe('parasoft-coverage-action/main', () => {
 
         beforeEach(() => {
             fakeCustomizedJobRunSummary = sandbox.fake.resolves({});
-            sandbox.replace(runner.CoverageParserRunner.prototype, 'customizeJobRunSummary', fakeCustomizedJobRunSummary);
+            sandbox.replace(runner.CoverageParserRunner.prototype, 'run', fakeCustomizedJobRunSummary);
         });
 
         afterEach(() => {

@@ -1,0 +1,8 @@
+{
+  "run_failed": "Failed to parse the coverage xml report",
+  "exit_code": "The coverage xml report parsing finished with code ",
+  "missing_coverage_data": "Coverage data is missing or incomplete in the report.",
+  "invalid_package_data": "Coverage package data is missing or incomplete in the report.",
+  "invalid_coverage_rate": "Coverage line rate must be between 0 and 1.",
+  "negative_coverage_values": "Coverage values (covered lines, total lines) must be non-negative."
+}

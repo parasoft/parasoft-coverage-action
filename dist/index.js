@@ -1,6 +1,28 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 6250:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.messages = void 0;
+const fs = __nccwpck_require__(9896);
+const pt = __nccwpck_require__(6928);
+class Messages {
+    deserialize(jsonPath) {
+        const buf = fs.readFileSync(jsonPath);
+        const json = JSON.parse(buf.toString('utf-8'));
+        return json;
+    }
+}
+const jsonPath = pt.join(__dirname, 'messages/messages.json');
+exports.messages = new Messages().deserialize(jsonPath);
+//# sourceMappingURL=messages.js.map
+
+/***/ }),
+
 /***/ 1924:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -9,53 +31,138 @@
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CoverageParserRunner = void 0;
 const core = __nccwpck_require__(7484);
+const messages_1 = __nccwpck_require__(6250);
 class CoverageParserRunner {
-    // TODO: Implement converting Parasoft coverage XML report to cobertura report
-    // TODO: Implement calculating coverage data from the converted report
-    async customizeJobRunSummary(coverageNode) {
-        try {
-            const markdown = this.customizeMarkdownContent(coverageNode.packages);
-            const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
-            return await core.summary
-                .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
-                + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
-                + markdown + "</tbody></table>")
-                .write();
-        }
-        catch (error) {
-            console.error("An error occurred while customizing the job run summary:", error);
-        }
+    async run() {
+        // TODO: Simulate coverageNode input for testing the structure implemented in current task
+        const coverageNode = this.getCoverageNode();
+        await this.generateCoverageSummary(coverageNode);
+        return { exitCode: 0 };
     }
-    customizeMarkdownContent(packagesNode) {
-        return Array.from(packagesNode.entries()).map(([packageName, packageNode]) => {
+    async generateCoverageSummary(coverageNode) {
+        if (!coverageNode) {
+            throw new Error(messages_1.messages.missing_coverage_data);
+        }
+        const markdown = this.generateMarkdownContent(coverageNode.packages);
+        const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
+        await core.summary
+            .addHeading('Parasoft Coverage')
+            .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
+            + "<tr><td><b>Total coverage&emsp;(" + totalCoverage + ")</b></td></tr>"
+            + markdown + "</tbody></table>")
+            .write();
+    }
+    generateMarkdownContent(packagesNode) {
+        if (!packagesNode || packagesNode.size === 0) {
+            throw new Error(messages_1.messages.missing_coverage_data);
+        }
+        const markdownRows = [];
+        for (const [packageName, packageNode] of packagesNode.entries()) {
             const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(packageNode);
             const packageCoverage = this.formatCoverage(coveredLines, totalLines, packageNode.lineRate);
-            return "<tr><td><details>" +
+            markdownRows.push("<tr><td><details>" +
                 "<summary>" + packageName + "&emsp;(" + packageCoverage + ")</summary>" +
                 "<table><tbody>" + markdownContent + "</tbody></table>" +
-                "</details></td></tr>";
-        }).join('');
+                "</details></td></tr>");
+        }
+        return markdownRows.join('');
     }
     calculatePackageCoverage(packageNode) {
+        if (!packageNode) {
+            throw new Error(messages_1.messages.invalid_package_data);
+        }
         let coveredLines = 0;
         let totalLines = 0;
-        let markdownContent = '';
-        packageNode.classes.forEach(classNode => {
+        const markdownRows = [];
+        for (const classNode of packageNode.classes.values()) {
             coveredLines += classNode.coveredLines;
             totalLines += classNode.lines.length;
             const classCoverage = this.formatCoverage(classNode.coveredLines, classNode.lines.length, classNode.lineRate);
-            markdownContent += "<tr><td>&emsp;" + classNode.name + "&emsp;(" + classCoverage + ")</td></tr>";
-        });
-        return { coveredLines, totalLines, markdownContent };
+            markdownRows.push(`<tr><td>&emsp;${classNode.name}&emsp;(${classCoverage})</td></tr>`);
+        }
+        return { coveredLines, totalLines, markdownContent: markdownRows.join('') };
     }
     formatCoverage(covered, total, rate) {
         if (covered < 0 || total < 0) {
-            throw new Error('The covered lines and total lines must be non-negative.');
+            throw new Error(messages_1.messages.negative_coverage_values);
         }
         if (rate < 0 || rate > 1) {
-            throw new Error('The line rate must be between 0 and 1.');
+            throw new Error(messages_1.messages.invalid_coverage_rate);
         }
         return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`;
+    }
+    getCoverageNode() {
+        // Simulate coverage data
+        return {
+            lineRate: 0.85,
+            linesCovered: 170,
+            linesValid: 200,
+            packages: new Map([
+                [
+                    'com.example.package1', // Package name
+                    {
+                        name: 'com.example.package1',
+                        lineRate: 0.9,
+                        classes: new Map([
+                            [
+                                'MyClass1.java', // Class file name
+                                {
+                                    classId: 'MyClass1.java|MyClass1', // Combination of filename + class name
+                                    fileName: 'MyClass1.java',
+                                    name: 'MyClass1',
+                                    lineRate: 0.95,
+                                    coveredLines: 19,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'abc123', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'def456', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'ghi789', hits: 1 },
+                                    ]
+                                }
+                            ],
+                            [
+                                'MyClass2.java',
+                                {
+                                    classId: 'MyClass2.java|MyClass2',
+                                    fileName: 'MyClass2.java',
+                                    name: 'MyClass2',
+                                    lineRate: 0.80,
+                                    coveredLines: 16,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'jkl012', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'mno345', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'pqr678', hits: 1 }
+                                    ]
+                                }
+                            ]
+                        ])
+                    }
+                ],
+                [
+                    'com.example.package2',
+                    {
+                        name: 'com.example.package2',
+                        lineRate: 0.75,
+                        classes: new Map([
+                            [
+                                'MyClass3.java',
+                                {
+                                    classId: 'MyClass3.java|MyClass3',
+                                    fileName: 'MyClass3.java',
+                                    name: 'MyClass3',
+                                    lineRate: 0.70,
+                                    coveredLines: 14,
+                                    lines: [
+                                        { lineNumber: 1, lineHash: 'stu901', hits: 1 },
+                                        { lineNumber: 2, lineHash: 'vwx234', hits: 0 },
+                                        { lineNumber: 3, lineHash: 'yzab567', hits: 1 }
+                                    ]
+                                }
+                            ]
+                        ])
+                    }
+                ]
+            ])
+        };
     }
 }
 exports.CoverageParserRunner = CoverageParserRunner;
@@ -27608,83 +27715,32 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
+const core = __nccwpck_require__(7484);
 const runner = __nccwpck_require__(1924);
+const messages_1 = __nccwpck_require__(6250);
 async function run() {
-    const theRunner = new runner.CoverageParserRunner();
-    await theRunner.customizeJobRunSummary(coverageNode);
+    try {
+        // TODO: Add run options (eg., covReportDir) and pass them to run()
+        const theRunner = new runner.CoverageParserRunner();
+        const outcome = await theRunner.run();
+        if (outcome.exitCode != 0) {
+            // TODO: When implement cobertura transforming
+        }
+        else {
+            core.info(messages_1.messages.exit_code + outcome.exitCode);
+        }
+    }
+    catch (error) {
+        core.error(messages_1.messages.run_failed);
+        if (error instanceof Error) {
+            core.error(error);
+            core.setFailed(error.message);
+        }
+        else {
+            core.setFailed(`Unknown error: ${error}`);
+        }
+    }
 }
-// TODO: CICD-962 "Replacing the coverage data in tables in workflow summary"
-// The following is an example for viewing the structure of showing the summary details in workflow
-const coverageNode = {
-    lineRate: 0.85,
-    linesCovered: 170,
-    linesValid: 200,
-    packages: new Map([
-        [
-            'com.example.package1', // Package name
-            {
-                name: 'com.example.package1',
-                lineRate: 0.9,
-                classes: new Map([
-                    [
-                        'MyClass1.java', // Class file name
-                        {
-                            classId: 'MyClass1.java|MyClass1', // Combination of filename + class name
-                            fileName: 'MyClass1.java',
-                            name: 'MyClass1',
-                            lineRate: 0.95,
-                            coveredLines: 19,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'abc123', hits: 1 },
-                                { lineNumber: 2, lineHash: 'def456', hits: 0 },
-                                { lineNumber: 3, lineHash: 'ghi789', hits: 1 },
-                            ]
-                        }
-                    ],
-                    [
-                        'MyClass2.java',
-                        {
-                            classId: 'MyClass2.java|MyClass2',
-                            fileName: 'MyClass2.java',
-                            name: 'MyClass2',
-                            lineRate: 0.80,
-                            coveredLines: 16,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'jkl012', hits: 1 },
-                                { lineNumber: 2, lineHash: 'mno345', hits: 0 },
-                                { lineNumber: 3, lineHash: 'pqr678', hits: 1 }
-                            ]
-                        }
-                    ]
-                ])
-            }
-        ],
-        [
-            'com.example.package2',
-            {
-                name: 'com.example.package2',
-                lineRate: 0.75,
-                classes: new Map([
-                    [
-                        'MyClass3.java',
-                        {
-                            classId: 'MyClass3.java|MyClass3',
-                            fileName: 'MyClass3.java',
-                            name: 'MyClass3',
-                            lineRate: 0.70,
-                            coveredLines: 14,
-                            lines: [
-                                { lineNumber: 1, lineHash: 'stu901', hits: 1 },
-                                { lineNumber: 2, lineHash: 'vwx234', hits: 0 },
-                                { lineNumber: 3, lineHash: 'yzab567', hits: 1 }
-                            ]
-                        }
-                    ]
-                ])
-            }
-        ]
-    ])
-};
 if (require.main === require.cache[eval('__filename')]) {
     run();
 }
