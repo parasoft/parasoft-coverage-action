@@ -10,7 +10,6 @@ class Messages implements ISerializable<Messages>
 {
     run_failed!: string;
     exit_code!: string;
-    invalid_coverage_data!: string
 
     deserialize(jsonPath: string) : Messages {
         const buf = fs.readFileSync(jsonPath);

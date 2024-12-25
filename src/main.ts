@@ -20,7 +20,8 @@ export async function run() {
             core.error(error);
             core.setFailed(error.message);
         } else {
-            core.setFailed(`Unknown error: ${error}`);
+            const errorString = String(error);
+            core.setFailed(`Unexpected error: ${errorString}`);
         }
     }
 }

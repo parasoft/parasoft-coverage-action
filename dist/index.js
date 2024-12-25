@@ -38,20 +38,16 @@ exports.messagesFormatter = new Formatter();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CoverageParserRunner = void 0;
 const core = __nccwpck_require__(7484);
-const messages_1 = __nccwpck_require__(6250);
 class CoverageParserRunner {
     async run() {
         // TODO: Simulate coverageNode input for testing the structure implemented in current task
-        const coverageNode = this.getCoverageNode();
-        await this.generateCoverageSummary(coverageNode);
+        const coberturaCoverage = this.getCoberturaCoverage();
+        await this.generateCoverageSummary(coberturaCoverage);
         return { exitCode: 0 };
     }
-    async generateCoverageSummary(coverageNode) {
-        if (!coverageNode) {
-            throw new Error(messages_1.messages.invalid_coverage_data);
-        }
-        const markdown = this.generateMarkdownContent(coverageNode.packages);
-        const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
+    async generateCoverageSummary(coberturaCoverage) {
+        const markdown = this.generateMarkdownContent(coberturaCoverage.packages);
+        const totalCoverage = this.formatCoverage(coberturaCoverage.linesCovered, coberturaCoverage.linesValid, coberturaCoverage.lineRate);
         await core.summary
             .addHeading('Parasoft Coverage')
             .addRaw("<table><tbody><tr><th>Coverage&emsp;(covered/total - percentage)</th></tr>"
@@ -59,14 +55,11 @@ class CoverageParserRunner {
             + markdown + "</tbody></table>")
             .write();
     }
-    generateMarkdownContent(packagesNode) {
-        if (!packagesNode || packagesNode.size === 0) {
-            throw new Error(messages_1.messages.invalid_coverage_data);
-        }
+    generateMarkdownContent(coberturaPackages) {
         const markdownRows = [];
-        for (const [packageName, packageNode] of packagesNode.entries()) {
-            const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(packageNode);
-            const packageCoverage = this.formatCoverage(coveredLines, totalLines, packageNode.lineRate);
+        for (const [packageName, coberturaPackage] of coberturaPackages.entries()) {
+            const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(coberturaPackage);
+            const packageCoverage = this.formatCoverage(coveredLines, totalLines, coberturaPackage.lineRate);
             markdownRows.push("<tr><td><details>" +
                 "<summary>" + packageName + "&emsp;(" + packageCoverage + ")</summary>" +
                 "<table><tbody>" + markdownContent + "</tbody></table>" +
@@ -74,30 +67,22 @@ class CoverageParserRunner {
         }
         return markdownRows.join('');
     }
-    calculatePackageCoverage(packageNode) {
-        if (!packageNode) {
-            throw new Error(messages_1.messages.invalid_coverage_data);
-        }
+    calculatePackageCoverage(coberturaPackage) {
         let coveredLines = 0;
         let totalLines = 0;
         const markdownRows = [];
-        for (const classNode of packageNode.classes.values()) {
-            coveredLines += classNode.coveredLines;
-            totalLines += classNode.lines.length;
-            const classCoverage = this.formatCoverage(classNode.coveredLines, classNode.lines.length, classNode.lineRate);
-            markdownRows.push(`<tr><td>&emsp;${classNode.name}&emsp;(${classCoverage})</td></tr>`);
+        for (const coberturaClass of coberturaPackage.classes.values()) {
+            coveredLines += coberturaClass.coveredLines;
+            totalLines += coberturaClass.lines.length;
+            const classCoverage = this.formatCoverage(coberturaClass.coveredLines, coberturaClass.lines.length, coberturaClass.lineRate);
+            markdownRows.push(`<tr><td>&emsp;${coberturaClass.name}&emsp;(${classCoverage})</td></tr>`);
         }
         return { coveredLines, totalLines, markdownContent: markdownRows.join('') };
     }
     formatCoverage(covered, total, rate) {
-        if ((covered < 0 || total < 0)
-            || (covered > total)
-            || (rate < 0 || rate > 1)) {
-            throw new Error(messages_1.messages.invalid_coverage_data);
-        }
-        return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`;
+        return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`; // e.g., (2/3 - 66.67%)
     }
-    getCoverageNode() {
+    getCoberturaCoverage() {
         // Simulate coverage data
         return {
             lineRate: 0.6667,
@@ -27842,7 +27827,8 @@ async function run() {
             core.setFailed(error.message);
         }
         else {
-            core.setFailed(`Unknown error: ${error}`);
+            const errorString = String(error);
+            core.setFailed(`Unexpected error: ${errorString}`);
         }
     }
 }

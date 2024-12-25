@@ -1,8 +1,6 @@
 import * as core from "@actions/core";
 import * as types from './types';
 
-import { messages } from './messages';
-
 export interface RunDetails {
     exitCode: number;
 }
@@ -10,19 +8,15 @@ export interface RunDetails {
 export class CoverageParserRunner {
     async run() : Promise<RunDetails> {
         // TODO: Simulate coverageNode input for testing the structure implemented in current task
-        const coverageNode = this.getCoverageNode();
+        const coberturaCoverage: types.CoberturaCoverage = this.getCoberturaCoverage();
 
-        await this.generateCoverageSummary(coverageNode);
+        await this.generateCoverageSummary(coberturaCoverage);
         return { exitCode: 0 };
     }
 
-    private async generateCoverageSummary(coverageNode: types.CoberturaCoverage | null) {
-        if (!coverageNode) {
-            throw new Error(messages.invalid_coverage_data);
-        }
-
-        const markdown = this.generateMarkdownContent(coverageNode.packages);
-        const totalCoverage = this.formatCoverage(coverageNode.linesCovered, coverageNode.linesValid, coverageNode.lineRate);
+    private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
+        const markdown = this.generateMarkdownContent(coberturaCoverage.packages);
+        const totalCoverage = this.formatCoverage(coberturaCoverage.linesCovered, coberturaCoverage.linesValid, coberturaCoverage.lineRate);
 
         await core.summary
             .addHeading('Parasoft Coverage')
@@ -32,15 +26,11 @@ export class CoverageParserRunner {
             .write();
     }
 
-    private generateMarkdownContent(packagesNode: Map<string, types.CoberturaPackage>) {
-        if (!packagesNode || packagesNode.size === 0) {
-            throw new Error(messages.invalid_coverage_data);
-        }
-
+    private generateMarkdownContent(coberturaPackages: Map<string, types.CoberturaPackage>) {
         const markdownRows: string[] = [];
-        for (const [packageName, packageNode] of packagesNode.entries()) {
-            const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(packageNode);
-            const packageCoverage = this.formatCoverage(coveredLines, totalLines, packageNode.lineRate);
+        for (const [packageName, coberturaPackage] of coberturaPackages.entries()) {
+            const { coveredLines, totalLines, markdownContent } = this.calculatePackageCoverage(coberturaPackage);
+            const packageCoverage = this.formatCoverage(coveredLines, totalLines, coberturaPackage.lineRate);
 
             markdownRows.push("<tr><td><details>" +
                 "<summary>" + packageName + "&emsp;(" + packageCoverage + ")</summary>" +
@@ -51,37 +41,27 @@ export class CoverageParserRunner {
         return markdownRows.join('');
     }
 
-    private calculatePackageCoverage(packageNode: types.CoberturaPackage): { coveredLines: number, totalLines: number, markdownContent: string } {
-        if (!packageNode) {
-            throw new Error(messages.invalid_coverage_data);
-        }
-
+    private calculatePackageCoverage(coberturaPackage: types.CoberturaPackage): { coveredLines: number, totalLines: number, markdownContent: string } {
         let coveredLines = 0;
         let totalLines = 0;
         const markdownRows: string[] = [];
 
-        for (const classNode of packageNode.classes.values()) {
-            coveredLines += classNode.coveredLines;
-            totalLines += classNode.lines.length;
-            const classCoverage = this.formatCoverage(classNode.coveredLines, classNode.lines.length, classNode.lineRate);
+        for (const coberturaClass of coberturaPackage.classes.values()) {
+            coveredLines += coberturaClass.coveredLines;
+            totalLines += coberturaClass.lines.length;
+            const classCoverage = this.formatCoverage(coberturaClass.coveredLines, coberturaClass.lines.length, coberturaClass.lineRate);
 
-            markdownRows.push(`<tr><td>&emsp;${classNode.name}&emsp;(${classCoverage})</td></tr>`);
+            markdownRows.push(`<tr><td>&emsp;${coberturaClass.name}&emsp;(${classCoverage})</td></tr>`);
         }
 
         return { coveredLines, totalLines, markdownContent: markdownRows.join('') };
     }
 
     private formatCoverage(covered: number, total: number, rate: number): string {
-        if ((covered < 0 || total < 0)
-            || (covered > total)
-            || (rate < 0 || rate > 1)) {
-            throw new Error(messages.invalid_coverage_data);
-        }
-
-        return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`;
+        return `${covered}/${total} - ${(rate * 100).toFixed(2)}%`; // e.g., (2/3 - 66.67%)
     }
 
-    public getCoverageNode(): types.CoberturaCoverage | null {
+    public getCoberturaCoverage(): types.CoberturaCoverage {
         // Simulate coverage data
         return {
             lineRate: 0.6667,
