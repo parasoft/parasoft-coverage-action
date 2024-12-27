@@ -4,6 +4,13 @@ author: 'Parasoft'
 branding:
   icon: 'aperture'
   color: 'blue'
+inputs:
+  report:
+    description: 'Path to folder or a file for the Parasoft coverage report. If using a relative path, it will be relative to the GitHub workspace directory.'
+    required: true
+  parasoftToolOrJavaRootPath:
+    description: 'Path to Parasoft tools installation folder or Java installation folder. If not specified, the JAVA_HOME environment variable will be used.'
+    required: false
 runs:
   using: node20
   main: 'dist/index.js'

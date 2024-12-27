@@ -1,17 +1,163 @@
 import * as core from "@actions/core";
 import * as types from './types';
+import * as cp from 'child_process';
+import * as os from 'os';
+import * as fs from 'fs';
+import * as pt from 'path';
+import * as glob from 'glob';
+import {messages, messagesFormatter} from './messages';
+
+export interface RunOptions {
+    /* Specify a path to folder or a file for the Parasoft coverage report */
+    report: string;
+
+    /* Specify a path to Parasoft tools installation folder or Java installation folder */
+    parasoftToolOrJavaRootPath: string;
+}
 
 export interface RunDetails {
     exitCode: number;
+    convertedCoberturaReportPaths?: string[];
 }
 
 export class CoverageParserRunner {
-    async run() : Promise<RunDetails> {
-        // TODO: Simulate coverageNode input for testing the structure implemented in current task
-        const coberturaCoverage: types.CoberturaCoverage = this.getCoberturaCoverage();
+    async run(runOptions: RunOptions) : Promise<RunDetails> {
+        const parasoftReportPaths = this.findParasoftCoverageReports(runOptions.report);
+        if (!parasoftReportPaths || parasoftReportPaths.length == 0) {
+            return Promise.reject(messagesFormatter.format(messages.coverage_report_not_found, runOptions.report));
+        }
 
-        await this.generateCoverageSummary(coberturaCoverage);
-        return { exitCode: 0 };
+        const javaFilePath = this.getJavaFilePath(runOptions.parasoftToolOrJavaRootPath);
+        if (!javaFilePath) {
+            return { exitCode: -1 }
+        }
+
+        const outcome = await this.convertReportsWithJava(javaFilePath, parasoftReportPaths);
+        if (outcome.exitCode == 0 && outcome.convertedCoberturaReportPaths) {
+            // TODO: Implement Merge multiple cobertura reports
+            // TODO: Implement calculating coverage data from the converted report
+            // TODO: Simulate coverageNode input for testing the structure implemented in current task
+            const coberturaCoverage: types.CoberturaCoverage = this.getCoberturaCoverage();
+
+            await this.generateCoverageSummary(coberturaCoverage);
+        }
+
+        return { exitCode: outcome.exitCode };
+    }
+
+    private findParasoftCoverageReports(reportPath: string) : string[] | undefined {
+        let reportPaths: string[] = [];
+        const workingDir = process.env.GITHUB_WORKSPACE || process.cwd();
+        if (pt.isAbsolute(reportPath)) {
+            core.info(messages.finding_coverage_report);
+            // Handle for path like '/coverage.xml' in Windows
+            reportPath = pt.resolve(reportPath);
+        } else {
+            core.info(messagesFormatter.format(messages.finding_coverage_report_in_working_directory , workingDir));
+            reportPath = pt.join(workingDir, reportPath);
+        }
+
+        // When report path is a directory
+        if (pt.extname(reportPath) == '') {
+            reportPath = pt.join(reportPath, "coverage.xml");
+        }
+
+        reportPath = reportPath.replace(/\\/g, "/");
+
+        try {
+            // Use glob to find the matching report paths
+            reportPaths = glob.sync(reportPath);
+        } catch (error) {
+            return undefined;
+        }
+
+        if (!reportPaths) {
+            return undefined;
+        }
+
+        if (reportPaths.length == 1) {
+            core.info(messagesFormatter.format(messages.found_coverage_report, reportPaths[0]));
+        } else if (reportPaths.length > 1) {
+            core.info(messagesFormatter.format(messages.found_multiple_coverage_report, reportPaths.length));
+        }
+
+        return reportPaths;
+    }
+
+    private getJavaFilePath(parasoftToolOrJavaRootPath: string | undefined): string | undefined {
+        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+
+        if (!installDir || !fs.existsSync(installDir)) {
+            core.warning(messages.java_or_parasoft_tool_install_dir_not_found);
+            return undefined;
+        }
+
+        const javaFilePath = this.doGetJavaFilePath(installDir);
+        if (!javaFilePath) {
+            core.warning(messagesFormatter.format(messages.java_not_found_in_java_or_parasoft_tool_install_dir));
+        } else {
+            core.debug(messagesFormatter.format(messages.found_java_at, javaFilePath));
+        }
+
+        return javaFilePath;
+    }
+
+    private doGetJavaFilePath(installDir: string): string | undefined {
+        core.debug(messagesFormatter.format(messages.finding_java_in_java_or_parasoft_tool_install_dir, installDir));
+        const javaFileName = os.platform() == "win32" ? "java.exe" : "java";
+        const javaPaths = [
+            "bin", // Java installation
+            "bin/dottest/Jre_x64/bin", // dotTEST installation
+            "bin/jre/bin" // C/C++test or Jtest installation
+        ];
+
+        for (const path of javaPaths) {
+            const javaFilePath = pt.join(installDir, path, javaFileName);
+            if (fs.existsSync(javaFilePath)) {
+                return javaFilePath;
+            }
+        }
+
+        return undefined;
+    }
+
+    private async convertReportsWithJava(javaPath: string, sourcePaths: string[]) : Promise<RunDetails> {
+        core.debug(messages.using_java_to_convert_report);
+        const jarPath = pt.join(__dirname, "SaxonHE12-2J/saxon-he-12.2.jar");
+        const xslPath = pt.join(__dirname, "cobertura.xsl");
+        const coberturaReports: string[] = [];
+
+        for (const sourcePath of sourcePaths) {
+            core.info(messagesFormatter.format(messages.converting_coverage_report_to_cobertura, sourcePath));
+            const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
+
+            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off`;
+            core.info(commandLine);
+            const result = await new Promise<RunDetails>((resolve, reject) => {
+                const process = cp.spawn(`${commandLine}`, {shell: true, windowsHide: true });
+                this.handleProcess(process, resolve, reject);
+            });
+
+            if(result.exitCode != 0) {
+                return { exitCode: result.exitCode };
+            }
+            coberturaReports.push(outPath);
+            core.info(messagesFormatter.format(messages.converted_cobertura_report, outPath));
+        }
+
+        return { exitCode: 0, convertedCoberturaReportPaths: coberturaReports };
+    }
+
+    private handleProcess(process, resolve, reject) {
+        process.stdout?.on('data', (data) => { core.info(`${data}`.replace(/\s+$/g, '')); });
+        process.stderr?.on('data', (data) => { core.info(`${data}`.replace(/\s+$/g, '')); });
+        process.on('close', (code) => {
+            const result : RunDetails = {
+                exitCode: (code != null) ? code : 150 // 150 = signal received
+            };
+            resolve(result);
+        });
+        process.on("error", (err) => { reject(err); });
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
