@@ -1,0 +1,4 @@
+{
+  "run_failed": "Failed to parse the coverage XML report",
+  "exit_code": "The coverage XML report parsing finished with code "
+}
