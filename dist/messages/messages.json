@@ -1,6 +1,6 @@
 {
   "run_failed": "Failed to parse the coverage XML report",
-  "exit_code": "The coverage XML report parsing finished with code ",
+  "exit_code": "The coverage XML report parsing finished with code {0}",
   "finding_coverage_report": "Finding Parasoft coverage XML report...",
   "finding_coverage_report_in_working_directory": "Finding Parasoft SOAtest XML report in working directory {0}...",
   "found_coverage_report": "Found Parasoft coverage XML report file: {0}",
