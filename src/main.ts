@@ -13,9 +13,9 @@ export async function run() {
 
         if (outcome.exitCode != 0) {
             core.setFailed(messagesFormatter.format(messages.failed_convert_report, outcome.exitCode));
-        } else {
-            core.info(messagesFormatter.format(messages.exit_code, outcome.exitCode));
+            return;
         }
+        core.info(messagesFormatter.format(messages.exit_code, outcome.exitCode));
     } catch (error) {
         core.error(messages.run_failed);
         if (error instanceof Error) {

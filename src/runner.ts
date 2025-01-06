@@ -8,10 +8,10 @@ import * as glob from 'glob';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
-    /* Specify a path to folder or a file for the Parasoft coverage report */
+    /* Specify a path to a folder or file for the Parasoft coverage report */
     report: string;
 
-    /* Specify a path to Parasoft tools installation folder or Java installation folder */
+    /* Specify a path to Parasoft tool installation folder or Java installation folder */
     parasoftToolOrJavaRootPath: string;
 }
 
@@ -138,7 +138,7 @@ export class CoverageParserRunner {
                 this.handleProcess(process, resolve, reject);
             });
 
-            if(result.exitCode != 0) {
+            if (result.exitCode != 0) {
                 return { exitCode: result.exitCode };
             }
             coberturaReports.push(outPath);

@@ -36148,10 +36148,9 @@ async function run() {
         const outcome = await theRunner.run(runOptions);
         if (outcome.exitCode != 0) {
             core.setFailed(messages_1.messagesFormatter.format(messages_1.messages.failed_convert_report, outcome.exitCode));
+            return;
         }
-        else {
-            core.info(messages_1.messagesFormatter.format(messages_1.messages.exit_code, outcome.exitCode));
-        }
+        core.info(messages_1.messagesFormatter.format(messages_1.messages.exit_code, outcome.exitCode));
     }
     catch (error) {
         core.error(messages_1.messages.run_failed);

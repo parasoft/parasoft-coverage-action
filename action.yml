@@ -6,10 +6,10 @@ branding:
   color: 'blue'
 inputs:
   report:
-    description: 'Path to folder or a file for the Parasoft coverage report. If using a relative path, it will be relative to the GitHub workspace directory.'
+    description: 'Path to a folder or file for the Parasoft coverage report. If using a relative path, it will be relative to the GitHub workspace directory.'
     required: true
   parasoftToolOrJavaRootPath:
-    description: 'Path to Parasoft tools installation folder or Java installation folder. If not specified, the JAVA_HOME environment variable will be used.'
+    description: 'Root path to the Parasoft tool or Java installation required to locate the Java environment for report processing. If not specified, the GitHub Action will attempt to use the path from the JAVA_HOME environment variable.'
     required: false
 runs:
   using: node20
