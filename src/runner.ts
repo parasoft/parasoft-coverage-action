@@ -5,6 +5,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as pt from 'path';
 import * as glob from 'glob';
+import {XMLParser} from 'fast-xml-parser';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
@@ -21,6 +22,8 @@ export interface RunDetails {
 }
 
 export class CoverageParserRunner {
+    workingDir = process.env.GITHUB_WORKSPACE + '';
+
     async run(runOptions: RunOptions) : Promise<RunDetails> {
         const parasoftReportPaths = this.findParasoftCoverageReports(runOptions.report);
         if (!parasoftReportPaths || parasoftReportPaths.length == 0) {
@@ -47,19 +50,13 @@ export class CoverageParserRunner {
 
     private findParasoftCoverageReports(reportPath: string) : string[] | undefined {
         let reportPaths: string[] = [];
-        const workingDir = process.env.GITHUB_WORKSPACE || process.cwd();
         if (pt.isAbsolute(reportPath)) {
             core.info(messages.finding_coverage_report);
             // Handle for path like '/coverage.xml' in Windows
             reportPath = pt.resolve(reportPath);
         } else {
-            core.info(messagesFormatter.format(messages.finding_coverage_report_in_working_directory , workingDir));
-            reportPath = pt.join(workingDir, reportPath);
-        }
-
-        // When report path is a directory
-        if (pt.extname(reportPath) == '') {
-            reportPath = pt.join(reportPath, "coverage.xml");
+            core.info(messagesFormatter.format(messages.finding_coverage_report_in_working_directory , this.workingDir));
+            reportPath = pt.join(this.workingDir, reportPath);
         }
 
         reportPath = reportPath.replace(/\\/g, "/");
@@ -67,8 +64,8 @@ export class CoverageParserRunner {
         try {
             // Use glob to find the matching report paths
             reportPaths = glob.sync(reportPath);
-        } catch (error) {
-            return undefined;
+        } catch (error: any) {
+            throw new Error(error.message);
         }
 
         if (!reportPaths) {
@@ -79,6 +76,9 @@ export class CoverageParserRunner {
             core.info(messagesFormatter.format(messages.found_coverage_report, reportPaths[0]));
         } else if (reportPaths.length > 1) {
             core.info(messagesFormatter.format(messages.found_multiple_coverage_report, reportPaths.length));
+            reportPaths.forEach((reportPath) => {
+                core.info("\t" + reportPath);
+            })
         }
 
         return reportPaths;
@@ -121,18 +121,29 @@ export class CoverageParserRunner {
         return undefined;
     }
 
-    private async convertReportsWithJava(javaPath: string, sourcePaths: string[]) : Promise<RunDetails> {
+    private async convertReportsWithJava(javaPath: string, sourcePaths: string[]): Promise<RunDetails> {
         core.debug(messages.using_java_to_convert_report);
         const jarPath = pt.join(__dirname, "SaxonHE12-2J/saxon-he-12.2.jar");
         const xslPath = pt.join(__dirname, "cobertura.xsl");
         const coberturaReports: string[] = [];
 
         for (const sourcePath of sourcePaths) {
+            if (!sourcePath.toLocaleLowerCase().endsWith('.xml')) {
+                core.warning(messagesFormatter.format(messages.skipping_unrecognized_report_file, sourcePath));
+                continue;
+            }
+
+            const isCoverageReport = await this.isCoverageReport(sourcePath);
+            if (!isCoverageReport) {
+                core.warning(messagesFormatter.format(messages.skipping_unrecognized_report_file, sourcePath));
+                continue;
+            }
+
             core.info(messagesFormatter.format(messages.converting_coverage_report_to_cobertura, sourcePath));
             const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
 
-            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off`;
-            core.info(commandLine);
+            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}`;
+            core.debug(commandLine);
             const result = await new Promise<RunDetails>((resolve, reject) => {
                 const process = cp.spawn(`${commandLine}`, {shell: true, windowsHide: true });
                 this.handleProcess(process, resolve, reject);
@@ -158,6 +169,22 @@ export class CoverageParserRunner {
             resolve(result);
         });
         process.on("error", (err) => { reject(err); });
+    }
+
+    private async isCoverageReport(report: string): Promise<boolean> {
+        const  X2jOptions = {
+            ignoreAttributes: false,
+            parseAttributeValue: true
+        }
+
+        const xmlData = fs.readFileSync(report);
+        const parser = new XMLParser(X2jOptions);
+        const parsedXml = parser.parse(xmlData);
+
+        if (parsedXml.Coverage && parsedXml.Coverage['@_ver']) {
+            return true;
+        }
+        return false;
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {

@@ -97,12 +97,13 @@ describe('parasoft-coverage-action/runner', () => {
 
         it('should return undefined when finding reports with a error', () => {
             globSyncStub.throws(new Error('finding reports error'));
-
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = testRunner.findParasoftCoverageReports(__dirname);
 
-            if (res) {
-                fail('res should be undefined', undefined);
+            try {
+                const res = testRunner.findParasoftCoverageReports(__dirname);
+                fail("Test failed", res);
+            } catch (error: any) {
+                error.message.should.equal('finding reports error');
             }
         });
 
@@ -125,7 +126,9 @@ describe('parasoft-coverage-action/runner', () => {
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = testRunner.findParasoftCoverageReports(reportPath);
 
-            sinon.assert.calledWith(coreInfo, 'Found 2 Parasoft coverage XML report files');
+            sinon.assert.calledWith(coreInfo, 'Found 2 Parasoft coverage XML report paths:');
+            sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
+            sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
             res.length.should.equal(2);
             res[0].should.equal(expectedReportPaths[0]);
             res[1].should.equal(expectedReportPaths[1]);
@@ -207,9 +210,36 @@ describe('parasoft-coverage-action/runner', () => {
     });
 
     describe('convertReportsWithJava()', () => {
-        it('should exit with non zero code when convert parasoft report failed', async () => {
+        let fsReadFileSyncStub;
+        beforeEach(function() {
+            fsReadFileSyncStub = sinon.stub(fs, 'readFileSync');
+        });
+
+        afterEach(function() {
+            fsReadFileSyncStub.restore();
+        });
+
+        it('should print warning message when report path is a directory path', async () => {
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml'])
+            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/report']);
+
+            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: path/to/report');
+            res.convertedCoberturaReportPaths.length.should.equal(0);
+        });
+
+        it('should print warning message when report is not a coverage report', async () => {
+            fsReadFileSyncStub.returns('<testsuites>...</testsuites>');
+            const testRunner = new runner.CoverageParserRunner() as any;
+            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml']);
+
+            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: path/to/coverage.xml');
+            res.convertedCoberturaReportPaths.length.should.equal(0);
+        });
+
+        it('should exit with non zero code when convert parasoft report failed', async () => {
+            fsReadFileSyncStub.returns('<Coverage ver="1">...</Coverage>');
+            const testRunner = new runner.CoverageParserRunner() as any;
+            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml']);
 
             res.exitCode.should.not.equal(0);
         });
@@ -217,6 +247,7 @@ describe('parasoft-coverage-action/runner', () => {
         it('should return converted cobertura report paths when convert parasoft report successfully', async () => {
             let spawnStub;
             let handleProcessStub;
+            fsReadFileSyncStub.returns('<Coverage ver="1">...</Coverage>');
             const testRunner = new runner.CoverageParserRunner() as any;
 
             // Use Sinon to mock childProcess.spawn
