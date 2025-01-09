@@ -72,7 +72,8 @@ class CoverageParserRunner {
         let reportPaths = [];
         if (pt.isAbsolute(reportPath)) {
             core.info(messages_1.messages.finding_coverage_report);
-            // Handle for path like '/coverage.xml' in Windows
+            // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
+            // Example: '/coverage.xml' -> 'C:/coverage.xml'
             reportPath = pt.resolve(reportPath);
         }
         else {
@@ -149,7 +150,7 @@ class CoverageParserRunner {
             }
             core.info(messages_1.messagesFormatter.format(messages_1.messages.converting_coverage_report_to_cobertura, sourcePath));
             const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
-            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}`;
+            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}"`;
             core.debug(commandLine);
             const result = await new Promise((resolve, reject) => {
                 const process = cp.spawn(`${commandLine}`, { shell: true, windowsHide: true });

@@ -52,7 +52,8 @@ export class CoverageParserRunner {
         let reportPaths: string[] = [];
         if (pt.isAbsolute(reportPath)) {
             core.info(messages.finding_coverage_report);
-            // Handle for path like '/coverage.xml' in Windows
+            // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
+            // Example: '/coverage.xml' -> 'C:/coverage.xml'
             reportPath = pt.resolve(reportPath);
         } else {
             core.info(messagesFormatter.format(messages.finding_coverage_report_in_working_directory , this.workingDir));
@@ -142,7 +143,7 @@ export class CoverageParserRunner {
             core.info(messagesFormatter.format(messages.converting_coverage_report_to_cobertura, sourcePath));
             const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
 
-            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}`;
+            const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}"`;
             core.debug(commandLine);
             const result = await new Promise<RunDetails>((resolve, reject) => {
                 const process = cp.spawn(`${commandLine}`, {shell: true, windowsHide: true });
@@ -172,7 +173,7 @@ export class CoverageParserRunner {
     }
 
     private async isCoverageReport(report: string): Promise<boolean> {
-        const  X2jOptions = {
+        const X2jOptions = {
             ignoreAttributes: false,
             parseAttributeValue: true
         }
