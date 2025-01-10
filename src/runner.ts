@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as pt from 'path';
 import * as glob from 'glob';
 import {XMLParser} from 'fast-xml-parser';
+import sax from 'sax';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
@@ -173,19 +174,31 @@ export class CoverageParserRunner {
     }
 
     private async isCoverageReport(report: string): Promise<boolean> {
-        const X2jOptions = {
-            ignoreAttributes: false,
-            parseAttributeValue: true
-        }
+        return new Promise((resolve, reject) => {
+            const saxStream = sax.createStream(true, {});
 
-        const xmlData = fs.readFileSync(report);
-        const parser = new XMLParser(X2jOptions);
-        const parsedXml = parser.parse(xmlData);
-
-        if (parsedXml.Coverage && parsedXml.Coverage['@_ver']) {
-            return true;
-        }
-        return false;
+            // 监听标签打开事件
+            saxStream.on('opentag', (node) => {
+                if (node.name === 'Coverage' && node.attributes['ver']) {
+                    resolve(true);
+                    saxStream.close();
+                }
+            });
+    
+            // 监听解析结束事件
+            saxStream.on('end', () => {
+                resolve(false);
+            });
+    
+            // 监听错误事件
+            saxStream.on('error', (err) => {
+                reject(err);
+            });
+    
+            // 使用文件流逐块读取 XML 数据
+            const readStream = fs.createReadStream(report, { encoding: 'utf-8' });
+            readStream.pipe(saxStream);
+        });
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
