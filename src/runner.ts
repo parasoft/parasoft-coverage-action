@@ -173,25 +173,32 @@ export class CoverageParserRunner {
     }
 
     private async isCoverageReport(report: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const saxStream = sax.createStream(true, {});
+
+            let isCoverageReport = false;
 
             // 监听标签打开事件
             saxStream.on('opentag', (node) => {
-                if (node.name === 'Coverage' && node.attributes['ver']) {
-                    resolve(true);
-                    saxStream.close();
+                if (!isCoverageReport) {
+                    if (node.name === 'Coverage' && node.attributes['ver']) {
+                        isCoverageReport = true;
+                    }
                 }
             });
     
             // 监听解析结束事件
             saxStream.on('end', () => {
-                resolve(false);
+                if (isCoverageReport) {
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
             });
     
             // 监听错误事件
-            saxStream.on('error', (err) => {
-                reject(err);
+            saxStream.on('error', () => {
+                resolve(false);
             });
     
             // 使用文件流逐块读取 XML 数据
