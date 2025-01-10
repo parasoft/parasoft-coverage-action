@@ -5,7 +5,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as pt from 'path';
 import * as glob from 'glob';
-import {XMLParser} from 'fast-xml-parser';
+import * as sax from 'sax';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
@@ -74,9 +74,9 @@ export class CoverageParserRunner {
         }
 
         if (reportPaths.length == 1) {
-            core.info(messagesFormatter.format(messages.found_coverage_report, reportPaths[0]));
+            core.info(messagesFormatter.format(messages.found_matching_file, reportPaths[0]));
         } else if (reportPaths.length > 1) {
-            core.info(messagesFormatter.format(messages.found_multiple_coverage_report, reportPaths.length));
+            core.info(messagesFormatter.format(messages.found_multiple_matching_files, reportPaths.length));
             reportPaths.forEach((reportPath) => {
                 core.info("\t" + reportPath);
             })
@@ -173,19 +173,28 @@ export class CoverageParserRunner {
     }
 
     private async isCoverageReport(report: string): Promise<boolean> {
-        const X2jOptions = {
-            ignoreAttributes: false,
-            parseAttributeValue: true
-        }
-
-        const xmlData = fs.readFileSync(report);
-        const parser = new XMLParser(X2jOptions);
-        const parsedXml = parser.parse(xmlData);
-
-        if (parsedXml.Coverage && parsedXml.Coverage['@_ver']) {
-            return true;
-        }
-        return false;
+        return new Promise((resolve) => {
+            let isCoverageReport = false;
+            const saxStream = sax.createStream(true, {});
+            saxStream.on("opentag", (node) => {
+                if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
+                    core.debug(messagesFormatter.format(messages.recognized_coverage_report, report));
+                    isCoverageReport = true;
+                }
+            });
+            saxStream.on("error",(e) => {
+                core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
+                resolve(false);
+            });
+            saxStream.on("end", async () => {
+                if (isCoverageReport) {
+                    resolve(true)
+                } else {
+                    resolve(false);
+                }
+            });
+            fs.createReadStream(report).pipe(saxStream);
+        })
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {

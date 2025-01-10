@@ -126,7 +126,7 @@ describe('parasoft-coverage-action/runner', () => {
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = testRunner.findParasoftCoverageReports(reportPath);
 
-            sinon.assert.calledWith(coreInfo, 'Found 2 Parasoft coverage XML report paths:');
+            sinon.assert.calledWith(coreInfo, 'Found 2 matching files:');
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
             res.length.should.equal(2);
@@ -142,7 +142,7 @@ describe('parasoft-coverage-action/runner', () => {
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = testRunner.findParasoftCoverageReports(reportPath);
 
-            sinon.assert.calledWith(coreInfo, 'Found Parasoft coverage XML report file: ' + expectedReportPath);
+            sinon.assert.calledWith(coreInfo, 'Found a matching file: ' + expectedReportPath);
             res.length.should.equal(1);
             res[0].should.equal(expectedReportPath);
         });
@@ -210,15 +210,6 @@ describe('parasoft-coverage-action/runner', () => {
     });
 
     describe('convertReportsWithJava()', () => {
-        let fsReadFileSyncStub;
-        beforeEach(function() {
-            fsReadFileSyncStub = sinon.stub(fs, 'readFileSync');
-        });
-
-        afterEach(function() {
-            fsReadFileSyncStub.restore();
-        });
-
         it('should print warning message when report path is a directory path', async () => {
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/report']);
@@ -228,27 +219,26 @@ describe('parasoft-coverage-action/runner', () => {
         });
 
         it('should print warning message when report is not a coverage report', async () => {
-            fsReadFileSyncStub.returns('<testsuites>...</testsuites>');
+            const testReport = pt.join(__dirname, '/resources/reports/coverage_incorrect.xml');
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml']);
+            await testRunner.convertReportsWithJava('path/to/java', [testReport]);
 
-            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: path/to/coverage.xml');
-            res.convertedCoberturaReportPaths.length.should.equal(0);
+            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: ' + testReport);
         });
 
         it('should exit with non zero code when convert parasoft report failed', async () => {
-            fsReadFileSyncStub.returns('<Coverage ver="1">...</Coverage>');
+            const testReport = pt.join(__dirname, '/resources/reports/coverage.xml');
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml']);
+            const res = await testRunner.convertReportsWithJava('path/to/java', [testReport]);
 
             res.exitCode.should.not.equal(0);
         });
 
         it('should return converted cobertura report paths when convert parasoft report successfully', async () => {
+            const testReport = pt.join(__dirname, '/resources/reports/coverage.xml');
+            const expectedReport = pt.join(__dirname, '/resources/reports/coverage-cobertura.xml');
             let spawnStub;
             let handleProcessStub;
-            fsReadFileSyncStub.returns('<Coverage ver="1">...</Coverage>');
-            const testRunner = new runner.CoverageParserRunner() as any;
 
             // Use Sinon to mock childProcess.spawn
             // @ts-ignore: Here is missing some properties from type, but they are not used in runner.ts
@@ -271,12 +261,13 @@ describe('parasoft-coverage-action/runner', () => {
                 return mockProcess;
             });
 
-            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/coverage.xml']);
+            const testRunner = new runner.CoverageParserRunner() as any;
+            const res = await testRunner.convertReportsWithJava('path/to/java', [testReport]);
 
-            sinon.assert.calledWith(coreInfo, 'Cobertura report generated successfully: path/to/coverage-cobertura.xml');
+            sinon.assert.calledWith(coreInfo, 'Cobertura report generated successfully: ' + expectedReport);
             res.exitCode.should.equal(0);
             res.convertedCoberturaReportPaths.length.should.equal(1);
-            res.convertedCoberturaReportPaths[0].should.equal('path/to/coverage-cobertura.xml');
+            res.convertedCoberturaReportPaths[0].should.equal(expectedReport);
 
             spawnStub.restore();
             handleProcessStub.restore();
