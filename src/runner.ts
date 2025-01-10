@@ -5,8 +5,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as pt from 'path';
 import * as glob from 'glob';
-import {XMLParser} from 'fast-xml-parser';
-import sax from 'sax';
+import * as sax from 'sax';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
@@ -87,7 +86,7 @@ export class CoverageParserRunner {
     }
 
     private getJavaFilePath(parasoftToolOrJavaRootPath: string | undefined): string | undefined {
-        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+        const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
 
         if (!installDir || !fs.existsSync(installDir)) {
             core.warning(messages.java_or_parasoft_tool_install_dir_not_found);

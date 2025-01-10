@@ -43,7 +43,7 @@ const os = __nccwpck_require__(857);
 const fs = __nccwpck_require__(9896);
 const pt = __nccwpck_require__(6928);
 const glob = __nccwpck_require__(1363);
-const sax_1 = __nccwpck_require__(2560);
+const sax = __nccwpck_require__(2560);
 const messages_1 = __nccwpck_require__(6250);
 class CoverageParserRunner {
     constructor() {
@@ -103,7 +103,7 @@ class CoverageParserRunner {
         return reportPaths;
     }
     getJavaFilePath(parasoftToolOrJavaRootPath) {
-        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+        const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
         if (!installDir || !fs.existsSync(installDir)) {
             core.warning(messages_1.messages.java_or_parasoft_tool_install_dir_not_found);
             return undefined;
@@ -178,7 +178,7 @@ class CoverageParserRunner {
     }
     async isCoverageReport(report) {
         return new Promise((resolve, reject) => {
-            const saxStream = sax_1.default.createStream(true, {});
+            const saxStream = sax.createStream(true, {});
             // 监听标签打开事件
             saxStream.on('opentag', (node) => {
                 if (node.name === 'Coverage' && node.attributes['ver']) {
