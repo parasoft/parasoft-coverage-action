@@ -140,7 +140,7 @@ class CoverageParserRunner {
                 continue;
             }
             core.info(messages_1.messagesFormatter.format(messages_1.messages.converting_coverage_report_to_cobertura, sourcePath));
-            const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
+            const outPath = sourcePath.substring(0, sourcePath.toLocaleLowerCase().lastIndexOf('.xml')) + '-cobertura.xml';
             const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}"`;
             core.debug(commandLine);
             const result = await new Promise((resolve, reject) => {
