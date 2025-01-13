@@ -169,6 +169,7 @@ class CoverageParserRunner {
     }
     async isCoverageReport(report) {
         return new Promise((resolve) => {
+            core.warning("=========: " + report);
             let isCoverageReport = false;
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
