@@ -103,7 +103,7 @@ class CoverageParserRunner {
         return reportPaths;
     }
     getJavaFilePath(parasoftToolOrJavaRootPath) {
-        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+        const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
         if (!installDir || !fs.existsSync(installDir)) {
             core.warning(messages_1.messages.java_or_parasoft_tool_install_dir_not_found);
             return undefined;
@@ -182,23 +182,18 @@ class CoverageParserRunner {
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
-                    core.debug(messages_1.messagesFormatter.format(messages_1.messages.recognized_coverage_report, report));
                     isCoverageReport = true;
-                    resolve(isCoverageReport);
-                    saxStream.end();
                 }
+                core.warning("opentag: " + node.name);
             });
             saxStream.on("error", (e) => {
+                core.warning("error");
                 core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
                 resolve(false);
             });
             saxStream.on("end", async () => {
-                if (isCoverageReport) {
-                    saxStream.removeAllListeners('opentag');
-                }
-                else {
-                    resolve(isCoverageReport);
-                }
+                core.warning("end");
+                resolve(isCoverageReport);
             });
             fs.createReadStream(report).pipe(saxStream);
         });
