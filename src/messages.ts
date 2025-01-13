@@ -22,7 +22,6 @@ class Messages implements ISerializable<Messages>
     found_java_at!: string;
     failed_to_parse_coverage_report!: string;
     skipping_unrecognized_report_file!: string;
-    recognized_coverage_report!: string;
     converting_coverage_report_to_cobertura!: string;
     converted_cobertura_report!: string;
     failed_convert_report!: string;

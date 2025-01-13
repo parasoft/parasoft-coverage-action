@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<Coverage ver="2" toolVer="2022.2.0" execEnv="win32_x86_64" hasViols="false" project="CICD_DemoProject" buildId="CICD_DemoProject-2024-02-02" climode="true" toolDispName="Jtest" prjModule="com.parasoft:project-with-default-package" toolId="jtest" machine="CD-RWANG" tag="Unit Tests-com.parasoft:project-with-default-package-${scontrol_branch}-win32_x86_64" time="2024-02-02T16:33:34+08:00" id="1708274312600" lang="en_US" user="Mrwan" toolName="DTP Engine for Java">
-    <TestConfig machine="CD-RWANG" pseudoUrl="builtin://Unit Tests" name="Unit Tests" user="Mrwan" />
+<Coverage ver="2" toolVer="2022.2.0" execEnv="win32_x86_64" hasViols="false" project="TestProject" buildId="TestProject-2024-02-02" climode="true" toolDispName="Jtest" prjModule="com.parasoft:project-with-default-package" toolId="jtest" machine="test" tag="Unit Tests-com.parasoft:project-with-default-package-${scontrol_branch}-win32_x86_64" time="2024-02-02T16:33:34+08:00" id="1708274312600" lang="en_US" user="test" toolName="DTP Engine for Java">
+    <TestConfig machine="testtest" pseudoUrl="builtin://Unit Tests" name="Unit Tests" user="test" />
     <VersionInfos>
         <VersionInfo id="LC" ver="1" />
     </VersionInfos>

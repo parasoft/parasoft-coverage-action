@@ -69,7 +69,6 @@ class CoverageParserRunner {
         return { exitCode: outcome.exitCode };
     }
     findParasoftCoverageReports(reportPath) {
-        let reportPaths = [];
         if (pt.isAbsolute(reportPath)) {
             core.info(messages_1.messages.finding_coverage_report);
             // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
@@ -81,16 +80,8 @@ class CoverageParserRunner {
             reportPath = pt.join(this.workingDir, reportPath);
         }
         reportPath = reportPath.replace(/\\/g, "/");
-        try {
-            // Use glob to find the matching report paths
-            reportPaths = glob.sync(reportPath);
-        }
-        catch (error) {
-            throw new Error(error.message);
-        }
-        if (!reportPaths) {
-            return undefined;
-        }
+        // Use glob to find the matching report paths
+        const reportPaths = glob.sync(reportPath);
         if (reportPaths.length == 1) {
             core.info(messages_1.messagesFormatter.format(messages_1.messages.found_matching_file, reportPaths[0]));
         }
@@ -103,7 +94,7 @@ class CoverageParserRunner {
         return reportPaths;
     }
     getJavaFilePath(parasoftToolOrJavaRootPath) {
-        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+        const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
         if (!installDir || !fs.existsSync(installDir)) {
             core.warning(messages_1.messages.java_or_parasoft_tool_install_dir_not_found);
             return undefined;
@@ -149,7 +140,7 @@ class CoverageParserRunner {
                 continue;
             }
             core.info(messages_1.messagesFormatter.format(messages_1.messages.converting_coverage_report_to_cobertura, sourcePath));
-            const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
+            const outPath = sourcePath.substring(0, sourcePath.toLocaleLowerCase().lastIndexOf('.xml')) + '-cobertura.xml';
             const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}"`;
             core.debug(commandLine);
             const result = await new Promise((resolve, reject) => {
@@ -182,7 +173,6 @@ class CoverageParserRunner {
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
-                    core.debug(messages_1.messagesFormatter.format(messages_1.messages.recognized_coverage_report, report));
                     isCoverageReport = true;
                 }
             });
@@ -191,12 +181,7 @@ class CoverageParserRunner {
                 resolve(false);
             });
             saxStream.on("end", async () => {
-                if (isCoverageReport) {
-                    resolve(true);
-                }
-                else {
-                    resolve(false);
-                }
+                resolve(isCoverageReport);
             });
             fs.createReadStream(report).pipe(saxStream);
         });

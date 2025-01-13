@@ -84,18 +84,12 @@ describe('parasoft-coverage-action/runner', () => {
     });
 
     describe('findParasoftCoverageReports()', () => {
-        let globSyncStub: sinon.SinonStub<[pattern: string | string[], options: glob.GlobOptions], string[] | glob.Path[]>;
-
         beforeEach(() => {
             process.env.GITHUB_WORKSPACE = __dirname;
-            globSyncStub = sinon.stub(glob, 'sync');
         });
 
-        afterEach(() => {
-            globSyncStub.restore();
-        });
-
-        it('should return undefined when finding reports with a error', () => {
+        it('should throw the error when finding reports with a error', () => {
+            const globSyncStub = sinon.stub(glob, 'sync');
             globSyncStub.throws(new Error('finding reports error'));
             const testRunner = new runner.CoverageParserRunner() as any;
 
@@ -105,23 +99,19 @@ describe('parasoft-coverage-action/runner', () => {
             } catch (error: any) {
                 error.message.should.equal('finding reports error');
             }
+            globSyncStub.restore();
         });
 
-        it('should return undefined when report not exist', () => {
-            const reportPath = 'notExist.xml';
-
+        it('should return a empty array when report not exist', () => {
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = testRunner.findParasoftCoverageReports(reportPath);
+            const res = testRunner.findParasoftCoverageReports('notExist.xml');
 
-            if (res) {
-                fail('res should be undefined', undefined);
-            }
+            res.length.should.equal(0);
         });
 
         it('should return the report paths when found multiple reports', () => {
-            const reportPath = customOption.report;
-            const expectedReportPaths = [pt.join(__dirname, "report1/coverage.xml").replace(/\\/g, "/"), pt.join(__dirname, "report2/coverage.xml").replace(/\\/g, "/")]
-            globSyncStub.returns(expectedReportPaths);
+            const reportPath = pt.join(__dirname, "/resources/reports/coverage*");
+            const expectedReportPaths = [pt.join(__dirname, "/resources/reports/coverage_incorrect.xml"), pt.join(__dirname, "/resources/reports/coverage.xml")];
 
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = testRunner.findParasoftCoverageReports(reportPath);
@@ -130,17 +120,13 @@ describe('parasoft-coverage-action/runner', () => {
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
             res.length.should.equal(2);
-            res[0].should.equal(expectedReportPaths[0]);
-            res[1].should.equal(expectedReportPaths[1]);
+            res.should.eql(expectedReportPaths);
         });
 
-        it('should return the report path when found only one report', () => {
-            const reportPath = customOption.report;
-            const expectedReportPath = pt.join(__dirname, "report/coverage.xml").replace(/\\/g, "/");
-            globSyncStub.returns([expectedReportPath]);
-
+        it('should return a report path when found only one report', () => {
+            const expectedReportPath = pt.join(__dirname, "/resources/reports/coverage.xml");
             const testRunner = new runner.CoverageParserRunner() as any;
-            const res = testRunner.findParasoftCoverageReports(reportPath);
+            const res = testRunner.findParasoftCoverageReports('./resources/reports/coverage.xml');
 
             sinon.assert.calledWith(coreInfo, 'Found a matching file: ' + expectedReportPath);
             res.length.should.equal(1);

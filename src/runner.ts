@@ -48,8 +48,7 @@ export class CoverageParserRunner {
         return { exitCode: outcome.exitCode };
     }
 
-    private findParasoftCoverageReports(reportPath: string) : string[] | undefined {
-        let reportPaths: string[] = [];
+    private findParasoftCoverageReports(reportPath: string) : string[] {
         if (pt.isAbsolute(reportPath)) {
             core.info(messages.finding_coverage_report);
             // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
@@ -62,16 +61,8 @@ export class CoverageParserRunner {
 
         reportPath = reportPath.replace(/\\/g, "/");
 
-        try {
-            // Use glob to find the matching report paths
-            reportPaths = glob.sync(reportPath);
-        } catch (error: any) {
-            throw new Error(error.message);
-        }
-
-        if (!reportPaths) {
-            return undefined;
-        }
+        // Use glob to find the matching report paths
+        const reportPaths: string[] = glob.sync(reportPath);
 
         if (reportPaths.length == 1) {
             core.info(messagesFormatter.format(messages.found_matching_file, reportPaths[0]));
@@ -86,7 +77,7 @@ export class CoverageParserRunner {
     }
 
     private getJavaFilePath(parasoftToolOrJavaRootPath: string | undefined): string | undefined {
-        let installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
+        const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
 
         if (!installDir || !fs.existsSync(installDir)) {
             core.warning(messages.java_or_parasoft_tool_install_dir_not_found);
@@ -141,7 +132,7 @@ export class CoverageParserRunner {
             }
 
             core.info(messagesFormatter.format(messages.converting_coverage_report_to_cobertura, sourcePath));
-            const outPath = sourcePath.substring(0, sourcePath.lastIndexOf('.xml')) + '-cobertura.xml';
+            const outPath = sourcePath.substring(0, sourcePath.toLocaleLowerCase().lastIndexOf('.xml')) + '-cobertura.xml';
 
             const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.workingDir}"`;
             core.debug(commandLine);
@@ -178,7 +169,6 @@ export class CoverageParserRunner {
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
-                    core.debug(messagesFormatter.format(messages.recognized_coverage_report, report));
                     isCoverageReport = true;
                 }
             });
@@ -187,14 +177,10 @@ export class CoverageParserRunner {
                 resolve(false);
             });
             saxStream.on("end", async () => {
-                if (isCoverageReport) {
-                    resolve(true)
-                } else {
-                    resolve(false);
-                }
+                resolve(isCoverageReport);
             });
             fs.createReadStream(report).pipe(saxStream);
-        })
+        });
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
