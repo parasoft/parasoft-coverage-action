@@ -183,18 +183,12 @@ class CoverageParserRunner {
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    throw new Error("stop_parsing");
+                    saxStream.destroy();
                 }
-                core.warning("opentag: " + node.name);
             });
             saxStream.on("error", (e) => {
-                if (e.message == "stop_parsing") {
-                    resolve(isCoverageReport);
-                }
-                else {
-                    core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
-                    resolve(false);
-                }
+                core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
+                resolve(false);
             });
             saxStream.on("end", async () => {
                 resolve(isCoverageReport);

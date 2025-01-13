@@ -48,8 +48,7 @@ export class CoverageParserRunner {
         return { exitCode: outcome.exitCode };
     }
 
-    private findParasoftCoverageReports(reportPath: string) : string[] | undefined {
-        let reportPaths: string[] = [];
+    private findParasoftCoverageReports(reportPath: string) : string[] {
         if (pt.isAbsolute(reportPath)) {
             core.info(messages.finding_coverage_report);
             // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
@@ -62,16 +61,8 @@ export class CoverageParserRunner {
 
         reportPath = reportPath.replace(/\\/g, "/");
 
-        try {
-            // Use glob to find the matching report paths
-            reportPaths = glob.sync(reportPath);
-        } catch (error: any) {
-            throw new Error(error.message);
-        }
-
-        if (!reportPaths) {
-            return undefined;
-        }
+        // Use glob to find the matching report paths
+        const reportPaths: string[] = glob.sync(reportPath);
 
         if (reportPaths.length == 1) {
             core.info(messagesFormatter.format(messages.found_matching_file, reportPaths[0]));
@@ -179,17 +170,12 @@ export class CoverageParserRunner {
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    throw new Error("stop_parsing");
+                    saxStream.destroy();
                 }
-                core.warning("opentag: " + node.name);
             });
             saxStream.on("error",(e) => {
-                if (e.message == "stop_parsing") {
-                    resolve(isCoverageReport);
-                } else {
-                    core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
-                    resolve(false);
-                }
+                core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
+                resolve(false);
             });
             saxStream.on("end", async () => {
                 resolve(isCoverageReport);
