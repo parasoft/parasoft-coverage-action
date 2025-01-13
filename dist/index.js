@@ -184,6 +184,8 @@ class CoverageParserRunner {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     core.debug(messages_1.messagesFormatter.format(messages_1.messages.recognized_coverage_report, report));
                     isCoverageReport = true;
+                    resolve(isCoverageReport);
+                    saxStream.end();
                 }
             });
             saxStream.on("error", (e) => {
@@ -192,10 +194,10 @@ class CoverageParserRunner {
             });
             saxStream.on("end", async () => {
                 if (isCoverageReport) {
-                    resolve(true);
+                    saxStream.removeAllListeners('opentag');
                 }
                 else {
-                    resolve(false);
+                    resolve(isCoverageReport);
                 }
             });
             fs.createReadStream(report).pipe(saxStream);

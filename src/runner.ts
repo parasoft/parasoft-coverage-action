@@ -180,6 +180,8 @@ export class CoverageParserRunner {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     core.debug(messagesFormatter.format(messages.recognized_coverage_report, report));
                     isCoverageReport = true;
+                    resolve(isCoverageReport);
+                    saxStream.end();
                 }
             });
             saxStream.on("error",(e) => {
@@ -188,13 +190,13 @@ export class CoverageParserRunner {
             });
             saxStream.on("end", async () => {
                 if (isCoverageReport) {
-                    resolve(true)
+                    saxStream.removeAllListeners('opentag');
                 } else {
-                    resolve(false);
+                    resolve(isCoverageReport);
                 }
             });
             fs.createReadStream(report).pipe(saxStream);
-        })
+        });
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
