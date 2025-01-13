@@ -172,7 +172,6 @@ export class CoverageParserRunner {
                 core.warning("opentag: " + node.name);
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    saxStream.end();
                 }
             });
             saxStream.on("error",(e) => {
