@@ -170,15 +170,22 @@ export class CoverageParserRunner {
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    saxStream.destroy();
+                    saxStream.emit("error", new Error("stop_parsing"));
                 }
+                core.warning("opentag: " + node.name);
             });
             saxStream.on("error",(e) => {
-                core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
-                resolve(false);
+                if (e.message == "stop_parsing") {
+                    resolve(isCoverageReport);
+                } else {
+                    core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
+                    resolve(false);
+                }
+                core.warning("error");
             });
             saxStream.on("end", async () => {
                 resolve(isCoverageReport);
+                core.warning("end");
             });
             fs.createReadStream(report).pipe(saxStream);
         });

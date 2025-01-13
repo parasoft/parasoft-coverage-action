@@ -69,7 +69,6 @@ class CoverageParserRunner {
         return { exitCode: outcome.exitCode };
     }
     findParasoftCoverageReports(reportPath) {
-        let reportPaths = [];
         if (pt.isAbsolute(reportPath)) {
             core.info(messages_1.messages.finding_coverage_report);
             // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
@@ -81,16 +80,8 @@ class CoverageParserRunner {
             reportPath = pt.join(this.workingDir, reportPath);
         }
         reportPath = reportPath.replace(/\\/g, "/");
-        try {
-            // Use glob to find the matching report paths
-            reportPaths = glob.sync(reportPath);
-        }
-        catch (error) {
-            throw new Error(error.message);
-        }
-        if (!reportPaths) {
-            return undefined;
-        }
+        // Use glob to find the matching report paths
+        const reportPaths = glob.sync(reportPath);
         if (reportPaths.length == 1) {
             core.info(messages_1.messagesFormatter.format(messages_1.messages.found_matching_file, reportPaths[0]));
         }
@@ -183,15 +174,23 @@ class CoverageParserRunner {
             saxStream.on("opentag", (node) => {
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    saxStream.destroy();
+                    saxStream.emit("error", new Error("stop_parsing"));
                 }
+                core.warning("opentag: " + node.name);
             });
             saxStream.on("error", (e) => {
-                core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
-                resolve(false);
+                if (e.message == "stop_parsing") {
+                    resolve(isCoverageReport);
+                }
+                else {
+                    core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
+                    resolve(false);
+                }
+                core.warning("error");
             });
             saxStream.on("end", async () => {
                 resolve(isCoverageReport);
+                core.warning("end");
             });
             fs.createReadStream(report).pipe(saxStream);
         });
