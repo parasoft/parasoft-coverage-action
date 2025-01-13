@@ -165,26 +165,22 @@ export class CoverageParserRunner {
 
     private async isCoverageReport(report: string): Promise<boolean> {
         return new Promise((resolve) => {
-            const readStream = fs.createReadStream(report);
             let isCoverageReport = false;
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
                 core.warning("opentag: " + node.name);
                 if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
                     isCoverageReport = true;
-                    readStream.destroy();
                 }
             });
             saxStream.on("error",(e) => {
                 core.warning(messagesFormatter.format(messages.failed_to_parse_coverage_report, report, e.message));
                 resolve(false);
-                core.warning("error");
             });
             saxStream.on("end", async () => {
                 resolve(isCoverageReport);
-                core.warning("end");
             });
-            readStream.pipe(saxStream);
+            fs.createReadStream(report).pipe(saxStream);
         });
     }
 
