@@ -75,6 +75,7 @@ describe('parasoft-coverage-action/runner', () => {
             sandbox.replace(testRunner, 'findParasoftCoverageReports', sandbox.fake.returns('reports/coverage.xml'));
             sandbox.replace(testRunner, 'getJavaFilePath', sandbox.fake.returns('path/to/java'));
             sandbox.replace(testRunner, 'convertReportsWithJava', sandbox.fake.returns(Promise.resolve({ exitCode: 0, convertedCoberturaReportPaths: []})));
+            sandbox.replace(testRunner, 'mergeCoberturaReports', sandbox.fake.returns({}));
             sandbox.replace(testRunner, 'generateCoverageSummary', sandbox.fake.returns(null)); // Use 'null' to indicate no return value
             sandbox.replace(fs, 'existsSync', sandbox.fake.returns(true));
 

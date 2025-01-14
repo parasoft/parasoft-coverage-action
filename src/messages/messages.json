@@ -15,5 +15,6 @@
   "skipping_unrecognized_report_file": "Skipping unrecognized report file: {0}",
   "converting_coverage_report_to_cobertura": "Converting Parasoft coverage report {0} to a Cobertura report...",
   "converted_cobertura_report": "Cobertura report generated successfully: {0}",
-  "failed_convert_report": "Report conversion failed with a non-zero exit code: {0}"
+  "failed_convert_report": "Report conversion failed with a non-zero exit code: {0}",
+  "failed_to_process_cobertura_report": "Failed to process Cobertura report: {0}. Error was: {1}"
 }

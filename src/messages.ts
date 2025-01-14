@@ -25,6 +25,7 @@ class Messages implements ISerializable<Messages>
     converting_coverage_report_to_cobertura!: string;
     converted_cobertura_report!: string;
     failed_convert_report!: string;
+    failed_to_process_cobertura_report!: string;
 
     deserialize(jsonPath: string) : Messages {
         const buf = fs.readFileSync(jsonPath);
