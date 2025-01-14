@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <Coverage ver="2" toolVer="2022.2.0" execEnv="win32_x86_64" hasViols="false" project="TestProject" buildId="TestProject-2024-02-02" climode="true" toolDispName="Jtest" prjModule="com.parasoft:project-with-default-package" toolId="jtest" machine="test" tag="Unit Tests-com.parasoft:project-with-default-package-${scontrol_branch}-win32_x86_64" time="2024-02-02T16:33:34+08:00" id="1708274312600" lang="en_US" user="test" toolName="DTP Engine for Java">
-    <TestConfig machine="testtest" pseudoUrl="builtin://Unit Tests" name="Unit Tests" user="test" />
+    <TestConfig machine="test" pseudoUrl="builtin://Unit Tests" name="Unit Tests" user="test" />
     <VersionInfos>
         <VersionInfo id="LC" ver="1" />
     </VersionInfos>
     <Repositories />
     <Locations>
-        <Loc locRef="1" projId="com.parasoft:project-with-default-package" covId="-524998482,-263405796" project="com.parasoft:project-with-default-package" resProjPath="src/main/java/com/parasoft/Demo.java" uri="file://user/E:/AzureAgent/_work/4/s/src/main/java/com/parasoft/Demo.java" projPath="/com.parasoft:project-with-default-package" hash="-1494762855" />
+            <Loc locRef="1" projId="com.parasoft:project-with-default-package" covId="-524998482,-263405796" project="com.parasoft:project-with-default-package" resProjPath="src/main/java/com/parasoft/Demo.java" uri="file://user/C:/test/src/main/java/com/parasoft/Demo.java" projPath="/com.parasoft:project-with-default-package" hash="-1494762855" />
     </Locations>
     <Tests>
         <Test testRef="1" id="NO_TEST" />

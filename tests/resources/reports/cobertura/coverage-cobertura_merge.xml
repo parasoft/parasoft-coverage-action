@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage line-rate="0" lines-covered="2" lines-valid="2" version="Jtest 2022.2.0">
+    <packages>
+        <package name="com.parasoft" line-rate="0">
+            <classes>
+                <class filename="src/main/java/com/parasoft/Demo.java" name="com.parasoft.Demo#1" line-rate="0">
+                    <lines>
+                        <line number="6" hits="0" hash="380126011"/>
+                        <line number="9" hits="0" hash="1606603515"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+    </packages>
+</coverage>

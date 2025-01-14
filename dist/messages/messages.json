@@ -15,5 +15,11 @@
   "skipping_unrecognized_report_file": "Skipping unrecognized report file: {0}",
   "converting_coverage_report_to_cobertura": "Converting Parasoft coverage report {0} to a Cobertura report...",
   "converted_cobertura_report": "Cobertura report generated successfully: {0}",
-  "failed_convert_report": "Report conversion failed with a non-zero exit code: {0}"
+  "failed_convert_report": "Report conversion failed with a non-zero exit code: {0}",
+  "failed_to_process_cobertura_report": "Failed to process Cobertura report: {0}. Error was: {1}",
+  "using_cobertura_report_as_base_report": "Using Cobertura report ''{0}'' as base report.",
+  "merging_cobertura_report": "Merging Cobertura report: {0}",
+  "coverage_data_was_not_merged_due_to": "Coverage data in report ''{0}'' was not merged due to {1}",
+  "coverage_data_was_not_merged": "Coverage data in report ''{0}'' was not merged",
+  "inconsistent_set_of_lines_reported_for_file": "An inconsistent set of lines reported for file ''{0}''"
 }
