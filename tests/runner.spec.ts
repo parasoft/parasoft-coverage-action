@@ -75,6 +75,7 @@ describe('parasoft-coverage-action/runner', () => {
             sandbox.replace(testRunner, 'findParasoftCoverageReports', sandbox.fake.returns('reports/coverage.xml'));
             sandbox.replace(testRunner, 'getJavaFilePath', sandbox.fake.returns('path/to/java'));
             sandbox.replace(testRunner, 'convertReportsWithJava', sandbox.fake.returns(Promise.resolve({ exitCode: 0, convertedCoberturaReportPaths: []})));
+            sandbox.replace(testRunner, 'mergeCoberturaReports', sandbox.fake.returns({}));
             sandbox.replace(testRunner, 'generateCoverageSummary', sandbox.fake.returns(null)); // Use 'null' to indicate no return value
             sandbox.replace(fs, 'existsSync', sandbox.fake.returns(true));
 
@@ -111,15 +112,19 @@ describe('parasoft-coverage-action/runner', () => {
 
         it('should return the report paths when found multiple reports', () => {
             const reportPath = pt.join(__dirname, "/resources/reports/coverage*");
-            const expectedReportPaths = [pt.join(__dirname, "/resources/reports/coverage_incorrect.xml"), pt.join(__dirname, "/resources/reports/coverage.xml")];
+            const expectedReportPaths = [
+                pt.join(__dirname, "/resources/reports/coverage_incorrect.xml"),
+                pt.join(__dirname, "/resources/reports/coverage.xml"),
+                pt.join(__dirname, "/resources/reports/coverage-cobertura.xml")
+            ];
 
             const testRunner = new runner.CoverageParserRunner() as any;
             const res = testRunner.findParasoftCoverageReports(reportPath);
 
-            sinon.assert.calledWith(coreInfo, 'Found 2 matching files:');
+            sinon.assert.calledWith(coreInfo, 'Found 3 matching files:');
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
-            res.length.should.equal(2);
+            res.length.should.equal(3);
             res.should.eql(expectedReportPaths);
         });
 

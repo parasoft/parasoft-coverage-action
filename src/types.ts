@@ -2,6 +2,7 @@ export type CoberturaCoverage = {
     lineRate: number;
     linesCovered: number;
     linesValid: number;
+    version: string;
     packages: Map<string, CoberturaPackage>;
 }
 
@@ -20,7 +21,7 @@ export type CoberturaClass = {
     lines: CoberturaLine[];
 }
 
-type CoberturaLine = {
+export type CoberturaLine = {
     lineNumber: number;
     lineHash: string;
     hits: number;
