@@ -6,7 +6,7 @@
     </VersionInfos>
     <Repositories />
     <Locations>
-        <Loc locRef="1" projId="com.parasoft:project-with-default-package" covId="-524998482,-263405796" project="com.parasoft:project-with-default-package" resProjPath="src/main/java/com/parasoft/Demo.java" uri="file://user/E:/AzureAgent/_work/4/s/src/main/java/com/parasoft/Demo.java" projPath="/com.parasoft:project-with-default-package" hash="-1494762855" />
+        <Loc locRef="1" projId="com.parasoft:project-with-default-package" covId="-524998482,-263405796" project="com.parasoft:project-with-default-package" resProjPath="src/main/java/com/parasoft/Demo.java" uri="file://user/C:/test/src/main/java/com/parasoft/Demo.java" projPath="/com.parasoft:project-with-default-package" hash="-1494762855" />
     </Locations>
     <Tests>
         <Test testRef="1" id="NO_TEST" />

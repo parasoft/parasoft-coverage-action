@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage line-rate="0" lines-covered="0" lines-valid="0" version="Jtest 2022.2.0">
+    <packages>
+        <package name="com.parasoft" line-rate="0">
+        </package>
+    </packages>
+</coverage>
