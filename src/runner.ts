@@ -78,19 +78,9 @@ export class CoverageParserRunner {
                 core.warning(messagesFormatter.format(messages.skipping_unrecognized_report_file, reportPath));
                 continue;
             }
-
+            core.info(messagesFormatter.format(messages.found_matching_file, reportPath));
             coverageReportPaths.push(reportPath);
         }
-
-        if (coverageReportPaths.length == 1) {
-            core.info(messagesFormatter.format(messages.found_matching_file, coverageReportPaths[0]));
-        } else if (coverageReportPaths.length > 1) {
-            core.info(messagesFormatter.format(messages.found_multiple_matching_files, coverageReportPaths.length));
-            coverageReportPaths.forEach((reportPath) => {
-                core.info("\t" + reportPath);
-            });
-        }
-
         return coverageReportPaths;
     }
 

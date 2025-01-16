@@ -47,7 +47,7 @@ describe('parasoft-coverage-action/runner', () => {
             sandbox.replace(testRunner, 'findParasoftCoverageReports', sandbox.fake.returns([]));
 
             await testRunner.run(customOption).catch((error) => {
-                error.should.equal('Parasoft coverage XML report not found at the specified location: ' + customOption.report);
+                error.should.equal('Parasoft coverage XML report not found. No files matched the specified minimatch pattern or path: ' + customOption.report);
             });
         });
 
@@ -142,9 +142,8 @@ describe('parasoft-coverage-action/runner', () => {
             ];
 
             const res = await testRunner.findParasoftCoverageReports(reportPath);
-            sinon.assert.calledWith(coreInfo, 'Found 2 matching files:');
-            sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
-            sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPaths[0]));
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPaths[1]));
             res.length.should.equal(2);
             res.should.eql(expectedReportPaths);
         });
@@ -153,7 +152,7 @@ describe('parasoft-coverage-action/runner', () => {
             const expectedReportPath = pt.join(__dirname, "resources/reports/coverage.xml");
             const res = await testRunner.findParasoftCoverageReports('./resources/reports/coverage.xml');
 
-            sinon.assert.calledWith(coreInfo, 'Found a matching file: ' + expectedReportPath);
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPath));
             res.length.should.equal(1);
             res[0].should.equal(expectedReportPath);
         });
