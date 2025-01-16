@@ -217,8 +217,8 @@ export class CoverageParserRunner {
 
         this.updateAttributes(baseCoverage);
         fs.writeFileSync(this.MERGED_COBERTURA_REPORT_PATH, this.processObjToXML(baseCoverage), 'utf-8');
-        core.debug(messagesFormatter.format(messages.merged_cobertura_reports, this.MERGED_COBERTURA_REPORT_PATH));
 
+        core.debug(messagesFormatter.format(messages.merged_cobertura_reports, this.MERGED_COBERTURA_REPORT_PATH));
         return baseCoverage;
     };
 
@@ -270,7 +270,6 @@ export class CoverageParserRunner {
                 coberturaClass.fileName = fileName;
                 coberturaClass.name = name;
                 coberturaClass.lineRate = parseFloat(lineRate);
-                coberturaClass.coveredLines = coberturaClass.lines.filter((line) => line.hits > 0).length;
             }
             if (node.name == 'line') {
                 const lineNumber = <string>node.attributes.number;
@@ -280,6 +279,9 @@ export class CoverageParserRunner {
                     lineNumber: parseInt(lineNumber),
                     lineHash: lineHash,
                     hits: parseInt(hits)
+                }
+                if (parseInt(hits) > 0) {
+                    coberturaClass.coveredLines ++;
                 }
                 coberturaClass.lines.push(line);
             }

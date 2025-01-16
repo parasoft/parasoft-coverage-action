@@ -270,7 +270,6 @@ class CoverageParserRunner {
                 coberturaClass.fileName = fileName;
                 coberturaClass.name = name;
                 coberturaClass.lineRate = parseFloat(lineRate);
-                coberturaClass.coveredLines = coberturaClass.lines.filter((line) => line.hits > 0).length;
             }
             if (node.name == 'line') {
                 const lineNumber = node.attributes.number;
@@ -281,6 +280,9 @@ class CoverageParserRunner {
                     lineHash: lineHash,
                     hits: parseInt(hits)
                 };
+                if (parseInt(hits) > 0) {
+                    coberturaClass.coveredLines++;
+                }
                 coberturaClass.lines.push(line);
             }
         };
