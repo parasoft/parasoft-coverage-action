@@ -98,12 +98,12 @@ describe('parasoft-coverage-action/runner', () => {
             process.env.GITHUB_WORKSPACE = __dirname;
         });
 
-        it('should throw the error when finding reports with a error', () => {
+        it('should throw the error when finding reports with a error', async () => {
             const globSyncStub = sinon.stub(glob, 'sync');
             globSyncStub.throws(new Error('finding reports error'));
 
             try {
-                const res = testRunner.findParasoftCoverageReports(__dirname);
+                const res = await testRunner.findParasoftCoverageReports(__dirname);
                 fail("Test failed", res);
             } catch (error: any) {
                 error.message.should.equal('finding reports error');
@@ -111,20 +111,37 @@ describe('parasoft-coverage-action/runner', () => {
             globSyncStub.restore();
         });
 
-        it('should return a empty array when report not exist', () => {
-            const res = testRunner.findParasoftCoverageReports('notExist.xml');
-
+        it('should return a empty array when report not exist', async () => {
+            const res = await testRunner.findParasoftCoverageReports('notExist.xml');
             res.length.should.equal(0);
         });
 
-        it('should return the report paths when found multiple reports', () => {
-            const reportPath = pt.join(__dirname, "/resources/reports/coverage*");
+        it('should print warning message when report path is a directory path', async () => {
+            const globSyncStub = sinon.stub(glob, 'sync');
+            globSyncStub.returns(['path/to/report']);
+            const res = await testRunner.findParasoftCoverageReports('path/to/report');
+
+            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: path/to/report');
+            res.length.should.equal(0);
+            globSyncStub.restore();
+        });
+
+        it('should print warning message when report is not a coverage report', async () => {
+            const testReport = pt.join(__dirname, 'resources/reports/coverage_incorrect.xml');
+            const res = await testRunner.findParasoftCoverageReports(testReport);
+
+            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: ' + testReport);
+            res.length.should.equal(0);
+        });
+
+        it('should return the report paths when found multiple reports', async () => {
+            const reportPath = pt.join(__dirname, "resources/reports/coverage*");
             const expectedReportPaths = [
-                pt.join(__dirname, "/resources/reports/coverage_incorrect.xml"),
-                pt.join(__dirname, "/resources/reports/coverage.xml"),
+                pt.join(__dirname, "resources/reports/coverage_test.xml"),
+                pt.join(__dirname, "resources/reports/coverage.xml"),
             ];
 
-            const res = testRunner.findParasoftCoverageReports(reportPath);
+            const res = await testRunner.findParasoftCoverageReports(reportPath);
             sinon.assert.calledWith(coreInfo, 'Found 2 matching files:');
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[0]);
             sinon.assert.calledWith(coreInfo, '\t' + expectedReportPaths[1]);
@@ -132,9 +149,9 @@ describe('parasoft-coverage-action/runner', () => {
             res.should.eql(expectedReportPaths);
         });
 
-        it('should return a report path when found only one report', () => {
-            const expectedReportPath = pt.join(__dirname, "/resources/reports/coverage.xml");
-            const res = testRunner.findParasoftCoverageReports('./resources/reports/coverage.xml');
+        it('should return a report path when found only one report', async () => {
+            const expectedReportPath = pt.join(__dirname, "resources/reports/coverage.xml");
+            const res = await testRunner.findParasoftCoverageReports('./resources/reports/coverage.xml');
 
             sinon.assert.calledWith(coreInfo, 'Found a matching file: ' + expectedReportPath);
             res.length.should.equal(1);
@@ -199,30 +216,16 @@ describe('parasoft-coverage-action/runner', () => {
     });
 
     describe('convertReportsWithJava()', () => {
-        it('should print warning message when report path is a directory path', async () => {
-            const res = await testRunner.convertReportsWithJava('path/to/java', ['path/to/report']);
-
-            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: path/to/report');
-            res.convertedCoberturaReportPaths.length.should.equal(0);
-        });
-
-        it('should print warning message when report is not a coverage report', async () => {
-            const testReport = pt.join(__dirname, '/resources/reports/coverage_incorrect.xml');
-            await testRunner.convertReportsWithJava('path/to/java', [testReport]);
-
-            sinon.assert.calledWith(coreWarning, 'Skipping unrecognized report file: ' + testReport);
-        });
-
         it('should exit with non zero code when convert parasoft report failed', async () => {
-            const testReport = pt.join(__dirname, '/resources/reports/coverage.xml');
+            const testReport = pt.join(__dirname, 'resources/reports/coverage.xml');
             const res = await testRunner.convertReportsWithJava('path/to/java', [testReport]);
 
             res.exitCode.should.not.equal(0);
         });
 
         it('should return converted cobertura report paths when convert parasoft report successfully', async () => {
-            const testReport = pt.join(__dirname, '/resources/reports/coverage.xml');
-            const expectedReport = pt.join(__dirname, '/resources/reports/coverage-cobertura.xml');
+            const testReport = pt.join(__dirname, 'resources/reports/coverage.xml');
+            const expectedReport = pt.join(__dirname, 'resources/reports/coverage-cobertura.xml');
             let spawnStub;
             let handleProcessStub;
 

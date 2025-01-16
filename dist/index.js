@@ -52,7 +52,7 @@ class CoverageParserRunner {
         this.MERGED_COBERTURA_REPORT_PATH = pt.join(this.WORKING_DIRECTORY, 'parasoft-merged-cobertura.xml');
     }
     async run(runOptions) {
-        const parasoftReportPaths = this.findParasoftCoverageReports(runOptions.report);
+        const parasoftReportPaths = await this.findParasoftCoverageReports(runOptions.report);
         if (!parasoftReportPaths || parasoftReportPaths.length == 0) {
             return Promise.reject(messages_1.messagesFormatter.format(messages_1.messages.coverage_report_not_found, runOptions.report));
         }
@@ -70,7 +70,7 @@ class CoverageParserRunner {
         }
         return { exitCode: outcome.exitCode };
     }
-    findParasoftCoverageReports(reportPath) {
+    async findParasoftCoverageReports(reportPath) {
         if (pt.isAbsolute(reportPath)) {
             core.info(messages_1.messages.finding_coverage_report);
             // On Windows, if the path starts with '/', path.resolve() will prepend the current drive letter
@@ -84,16 +84,29 @@ class CoverageParserRunner {
         reportPath = reportPath.replace(/\\/g, "/");
         // Use glob to find the matching report paths
         const reportPaths = glob.sync(reportPath);
-        if (reportPaths.length == 1) {
-            core.info(messages_1.messagesFormatter.format(messages_1.messages.found_matching_file, reportPaths[0]));
+        const coverageReportPaths = [];
+        for (const reportPath of reportPaths) {
+            if (!reportPath.toLocaleLowerCase().endsWith('.xml')) {
+                core.warning(messages_1.messagesFormatter.format(messages_1.messages.skipping_unrecognized_report_file, reportPath));
+                continue;
+            }
+            const isCoverageReport = await this.isCoverageReport(reportPath);
+            if (!isCoverageReport) {
+                core.warning(messages_1.messagesFormatter.format(messages_1.messages.skipping_unrecognized_report_file, reportPath));
+                continue;
+            }
+            coverageReportPaths.push(reportPath);
         }
-        else if (reportPaths.length > 1) {
-            core.info(messages_1.messagesFormatter.format(messages_1.messages.found_multiple_matching_files, reportPaths.length));
-            reportPaths.forEach((reportPath) => {
+        if (coverageReportPaths.length == 1) {
+            core.info(messages_1.messagesFormatter.format(messages_1.messages.found_matching_file, coverageReportPaths[0]));
+        }
+        else if (coverageReportPaths.length > 1) {
+            core.info(messages_1.messagesFormatter.format(messages_1.messages.found_multiple_matching_files, coverageReportPaths.length));
+            coverageReportPaths.forEach((reportPath) => {
                 core.info("\t" + reportPath);
             });
         }
-        return reportPaths;
+        return coverageReportPaths;
     }
     getJavaFilePath(parasoftToolOrJavaRootPath) {
         const installDir = parasoftToolOrJavaRootPath || process.env.JAVA_HOME;
@@ -132,15 +145,6 @@ class CoverageParserRunner {
         const xslPath = pt.join(__dirname, "cobertura.xsl");
         const coberturaReports = [];
         for (const sourcePath of sourcePaths) {
-            if (!sourcePath.toLocaleLowerCase().endsWith('.xml')) {
-                core.warning(messages_1.messagesFormatter.format(messages_1.messages.skipping_unrecognized_report_file, sourcePath));
-                continue;
-            }
-            const isCoverageReport = await this.isCoverageReport(sourcePath);
-            if (!isCoverageReport) {
-                core.warning(messages_1.messagesFormatter.format(messages_1.messages.skipping_unrecognized_report_file, sourcePath));
-                continue;
-            }
             core.info(messages_1.messagesFormatter.format(messages_1.messages.converting_coverage_report_to_cobertura, sourcePath));
             const outPath = sourcePath.substring(0, sourcePath.toLocaleLowerCase().lastIndexOf('.xml')) + '-cobertura.xml';
             const commandLine = `"${javaPath}" -jar "${jarPath}" -s:"${sourcePath}" -xsl:"${xslPath}" -o:"${outPath}" -versionmsg:off pipelineBuildWorkingDirectory="${this.WORKING_DIRECTORY}"`;
@@ -182,7 +186,7 @@ class CoverageParserRunner {
                 core.warning(messages_1.messagesFormatter.format(messages_1.messages.failed_to_parse_coverage_report, report, e.message));
                 resolve(false);
             });
-            saxStream.on("end", async () => {
+            saxStream.on("end", () => {
                 resolve(isCoverageReport);
             });
             fs.createReadStream(report).pipe(saxStream);
@@ -195,25 +199,26 @@ class CoverageParserRunner {
         let baseReportPath = reportPaths[0];
         core.debug(messages_1.messagesFormatter.format(messages_1.messages.using_cobertura_report_as_base_report, baseReportPath));
         let baseCoverage = this.processXMLToObj(baseReportPath);
-        if (reportPaths.length > 1) {
-            for (let i = 1; i < reportPaths.length; i++) {
-                const reportToMerge = this.processXMLToObj(reportPaths[i]);
-                try {
-                    core.debug(messages_1.messagesFormatter.format(messages_1.messages.merging_cobertura_report, reportPaths[i]));
-                    baseCoverage = this.mergeCoberturaCoverage(lodash.cloneDeep(baseCoverage), reportToMerge);
-                }
-                catch (error) {
-                    if (error instanceof Error) {
-                        core.warning(messages_1.messagesFormatter.format(messages_1.messages.coverage_data_was_not_merged_due_to, reportPaths[i], error.message));
-                    }
-                    else {
-                        core.warning(messages_1.messagesFormatter.format(messages_1.messages.coverage_data_was_not_merged, reportPaths[i])); // Should never happen
-                    }
-                }
+        for (let i = 1; i < reportPaths.length; i++) {
+            const reportToMerge = this.processXMLToObj(reportPaths[i]);
+            try {
+                core.debug(messages_1.messagesFormatter.format(messages_1.messages.merging_cobertura_report, reportPaths[i]));
+                baseCoverage = this.mergeCoberturaCoverage(lodash.cloneDeep(baseCoverage), reportToMerge);
             }
-            this.updateAttributes(baseCoverage);
+            catch (error) {
+                let errorMessage;
+                if (error instanceof Error) {
+                    errorMessage = error.message;
+                }
+                else {
+                    errorMessage = String(error);
+                }
+                core.warning(messages_1.messagesFormatter.format(messages_1.messages.coverage_data_was_not_merged_due_to, reportPaths[i], errorMessage));
+            }
         }
+        this.updateAttributes(baseCoverage);
         fs.writeFileSync(this.MERGED_COBERTURA_REPORT_PATH, this.processObjToXML(baseCoverage), 'utf-8');
+        core.debug(messages_1.messagesFormatter.format(messages_1.messages.merged_cobertura_reports, this.MERGED_COBERTURA_REPORT_PATH));
         return baseCoverage;
     }
     ;
