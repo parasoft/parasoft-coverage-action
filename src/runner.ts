@@ -194,23 +194,25 @@ export class CoverageParserRunner {
         core.debug(messagesFormatter.format(messages.using_cobertura_report_as_base_report, baseReportPath));
 
         let baseCoverage = this.processXMLToObj(baseReportPath);
-        for (let i = 1; i < reportPaths.length; i++) {
-            const reportToMerge: types.CoberturaCoverage = this.processXMLToObj(reportPaths[i]);
-            try {
-                core.debug(messagesFormatter.format(messages.merging_cobertura_report, reportPaths[i]));
-                baseCoverage = this.mergeCoberturaCoverage(lodash.cloneDeep(baseCoverage), reportToMerge);
-            } catch (error) {
-                if (error instanceof Error) {
-                    core.warning(messagesFormatter.format(messages.coverage_data_was_not_merged_due_to, reportPaths[i], error.message));
-                } else {
-                    core.warning(messagesFormatter.format(messages.coverage_data_was_not_merged, reportPaths[i])); // Should never happen
+        if (reportPaths.length > 1) {
+            for (let i = 1; i < reportPaths.length; i++) {
+                const reportToMerge: types.CoberturaCoverage = this.processXMLToObj(reportPaths[i]);
+                try {
+                    core.debug(messagesFormatter.format(messages.merging_cobertura_report, reportPaths[i]));
+                    baseCoverage = this.mergeCoberturaCoverage(lodash.cloneDeep(baseCoverage), reportToMerge);
+                } catch (error) {
+                    if (error instanceof Error) {
+                        core.warning(messagesFormatter.format(messages.coverage_data_was_not_merged_due_to, reportPaths[i], error.message));
+                    } else {
+                        core.warning(messagesFormatter.format(messages.coverage_data_was_not_merged, reportPaths[i])); // Should never happen
+                    }
                 }
             }
+
+            this.updateAttributes(baseCoverage);
         }
 
-        this.updateAttributes(baseCoverage);
         fs.writeFileSync(this.MERGED_COBERTURA_REPORT_PATH, this.processObjToXML(baseCoverage), 'utf-8');
-
         return baseCoverage;
     };
 
@@ -262,6 +264,7 @@ export class CoverageParserRunner {
                 coberturaClass.fileName = fileName;
                 coberturaClass.name = name;
                 coberturaClass.lineRate = parseFloat(lineRate);
+                coberturaClass.coveredLines = coberturaClass.lines.filter((line) => line.hits > 0).length;
             }
             if (node.name == 'line') {
                 const lineNumber = <string>node.attributes.number;
@@ -368,6 +371,9 @@ export class CoverageParserRunner {
         coberturaClass.lines.sort((line1, line2) => {return line1.lineNumber - line2.lineNumber});
     };
 
+    /**
+     * Recalculation for attribute values like 'lineRate','lines-valid','lines-covered' on <coverage>, <package> and <class>
+     */
     private updateAttributes(coberturaCoverage: types.CoberturaCoverage):void {
         let coverableLinesOnCoverage: number = 0;
         let coveredLinesOnCoverage: number = 0;
