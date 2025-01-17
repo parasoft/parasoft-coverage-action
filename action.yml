@@ -6,7 +6,7 @@ branding:
   color: 'blue'
 inputs:
   report:
-    description: 'Path to Parasoft coverage report files (supports minimatch patterns). If using a relative path, it will be relative to the GitHub workspace directory.'
+    description: 'Path or minimatch pattern to locate Parasoft coverage report XML files. If using a relative path, it is relative to the GitHub workspace directory. e.g. **/coverage.xml'
     required: true
   parasoftToolOrJavaRootPath:
     description: 'Root path to the Parasoft tool or Java installation required to locate the Java environment for report processing. If not specified, the GitHub Action will attempt to use the path from the JAVA_HOME environment variable.'

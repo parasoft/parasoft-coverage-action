@@ -13,7 +13,6 @@ class Messages implements ISerializable<Messages>
     finding_coverage_report!: string;
     finding_coverage_report_in_working_directory!:string;
     found_matching_file!: string;
-    found_multiple_matching_files!:string;
     coverage_report_not_found!: string;
     finding_java_in_java_or_parasoft_tool_install_dir!: string;
     using_java_to_convert_report!:string;
@@ -25,6 +24,12 @@ class Messages implements ISerializable<Messages>
     converting_coverage_report_to_cobertura!: string;
     converted_cobertura_report!: string;
     failed_convert_report!: string;
+    failed_to_process_cobertura_report!: string;
+    using_cobertura_report_as_base_report!: string;
+    merging_cobertura_report!: string;
+    coverage_data_was_not_merged_due_to!: string;
+    inconsistent_set_of_lines_reported_for_file!: string;
+    merged_cobertura_reports!: string;
 
     deserialize(jsonPath: string) : Messages {
         const buf = fs.readFileSync(jsonPath);

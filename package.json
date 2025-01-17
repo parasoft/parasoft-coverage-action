@@ -2,7 +2,7 @@
   "name": "parasoft-coverage-action",
   "version": "1.0.0",
   "private": true,
-  "description": "A GitHub Action for deploying Parasoft coverage reports and review results on GitHub.",
+  "description": "A GitHub Action for viewing the results of Parasoft coverage report on GitHub.",
   "main": "lib/main.js",
   "scripts": {
     "compile": "npx tsc -p ./",
@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/parasoft/parasoft-coverage-action#readme",
   "devDependencies": {
+    "@types/lodash": "^4.17.14",
     "@types/mocha": "^10.0.10",
     "@types/sax": "^1.2.7",
     "@types/sinon": "^17.0.3",

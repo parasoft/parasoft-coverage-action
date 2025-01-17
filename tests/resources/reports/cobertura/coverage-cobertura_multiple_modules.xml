@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage line-rate="0.5652173913043478" lines-covered="13" lines-valid="23" version="Jtest 2024.2.0">
+    <packages>
+        <package name="com.example" line-rate="0.5555555555555556">
+            <classes>
+                <class filename="C:/test/module-a/src/main/java/com/example/AppA.java" name="com.example.AppA" line-rate="0.66666666666666666667">
+                    <lines>
+                        <line number="3" hits="0" hash="1723197983"/>
+                        <line number="7" hits="1" hash="-1390516089"/>
+                        <line number="8" hits="1" hash="30537853"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+        <package name="com.example" line-rate="0.6666666666666666">
+            <classes>
+                <class filename="C:/test/module-b/src/main/java/com/example/AppB.java" name="com.example.AppB" line-rate="0.66666666666666666667">
+                    <lines>
+                        <line number="3" hits="0" hash="1723197984"/>
+                        <line number="7" hits="1" hash="-1390516089"/>
+                        <line number="8" hits="1" hash="30537853"/>
+                    </lines>
+                </class>
+            </classes>
+        </package>
+    </packages>
+</coverage>
