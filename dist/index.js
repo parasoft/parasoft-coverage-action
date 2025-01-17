@@ -49,7 +49,6 @@ const messages_1 = __nccwpck_require__(6250);
 class CoverageParserRunner {
     constructor() {
         this.WORKING_DIRECTORY = process.env.GITHUB_WORKSPACE + '';
-        this.MERGED_COBERTURA_REPORT_PATH = pt.join(this.WORKING_DIRECTORY, 'parasoft-merged-cobertura.xml');
     }
     async run(runOptions) {
         const parasoftReportPaths = await this.findParasoftCoverageReports(runOptions.report);
@@ -209,8 +208,7 @@ class CoverageParserRunner {
             }
         }
         this.updateAttributes(baseCoverage);
-        fs.writeFileSync(this.MERGED_COBERTURA_REPORT_PATH, this.processObjToXML(baseCoverage), 'utf-8');
-        core.debug(messages_1.messagesFormatter.format(messages_1.messages.merged_cobertura_reports, this.MERGED_COBERTURA_REPORT_PATH));
+        core.debug(messages_1.messagesFormatter.format(messages_1.messages.merged_cobertura_reports));
         return baseCoverage;
     }
     ;
@@ -390,30 +388,6 @@ class CoverageParserRunner {
         coberturaCoverage.linesCovered = coveredLinesOnCoverage;
         coberturaCoverage.linesValid = coverableLinesOnCoverage;
         coberturaCoverage.lineRate = coveredLinesOnCoverage / coverableLinesOnCoverage;
-    }
-    processObjToXML(coberturaReport) {
-        let coberturaPackagesText = '';
-        for (const coberturaPackage of Array.from(coberturaReport.packages.values())) {
-            coberturaPackagesText += this.generateCoberturaPackageText(coberturaPackage);
-        }
-        return `<?xml version="1.0" encoding="UTF-8"?>` +
-            `<coverage line-rate="${coberturaReport.lineRate}" lines-covered="${coberturaReport.linesCovered}" lines-valid="${coberturaReport.linesValid}" version="${coberturaReport.version}">` +
-            `<packages>${coberturaPackagesText}</packages>` +
-            `</coverage>`;
-    }
-    generateCoberturaPackageText(coberturaPackage) {
-        let coberturaClassesText = '';
-        for (const coberturaClass of Array.from(coberturaPackage.classes.values())) {
-            coberturaClassesText += this.generateCoberturaClassText(coberturaClass);
-        }
-        return `<package name="${coberturaPackage.name}" line-rate="${coberturaPackage.lineRate}"><classes>${coberturaClassesText}</classes></package>`;
-    }
-    generateCoberturaClassText(coberturaClass) {
-        let coberturaLinesText = '';
-        for (const coberturaLine of coberturaClass.lines) {
-            coberturaLinesText += `<line number="${coberturaLine.lineNumber}" hits="${coberturaLine.hits}" hash="${coberturaLine.lineHash}" />`;
-        }
-        return `<class filename="${coberturaClass.fileName}" name="${coberturaClass.name}" line-rate="${coberturaClass.lineRate}"><lines>${coberturaLinesText}</lines></class>`;
     }
     async generateCoverageSummary(coberturaCoverage) {
         const markdown = this.generateMarkdownContent(coberturaCoverage.packages);

@@ -20,5 +20,5 @@
   "merging_cobertura_report": "Merging Cobertura report: {0}",
   "coverage_data_was_not_merged_due_to": "Coverage data in report ''{0}'' was not merged due to {1}",
   "inconsistent_set_of_lines_reported_for_file": "An inconsistent set of lines reported for file ''{0}''",
-  "merged_cobertura_reports": "Cobertura reports merged successfully: {0}"
+  "merged_cobertura_reports": "Cobertura reports merged successfully"
 }

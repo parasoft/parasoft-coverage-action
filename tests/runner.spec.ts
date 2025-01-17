@@ -267,12 +267,6 @@ describe('parasoft-coverage-action/runner', () => {
             process.env.GITHUB_WORKSPACE = __dirname;
         });
 
-        afterEach(() => {
-            if (fs.existsSync(pt.join(__dirname, 'parasoft-merged-cobertura.xml'))) {
-                fs.unlinkSync(pt.join(__dirname, 'parasoft-merged-cobertura.xml'));
-            }
-        });
-
         it('should return undefined when no cobertura reports', () => {
             const res = testRunner.mergeCoberturaReports([]);
 
@@ -289,7 +283,7 @@ describe('parasoft-coverage-action/runner', () => {
         });
 
         describe('should return merged cobertura report data', () => {
-            it('when merging reports normal', () => {
+            it('when merging reports without multiple modules', () => {
                 const expectedCoverage = {
                     lineRate: 1,
                     linesCovered: 5,
@@ -333,6 +327,85 @@ describe('parasoft-coverage-action/runner', () => {
                     ])
                 }
                 const reportPaths = [pt.join(coberturaReportPathForTest, "coverage-cobertura.xml"), pt.join(coberturaReportPathForTest, "coverage-cobertura_merge.xml")];
+
+                const res = testRunner.mergeCoberturaReports(reportPaths);
+                res.should.eql(expectedCoverage);
+            });
+
+            it('when merging reports with multiple modules', () => {
+                const expectedCoverage = {
+                    lineRate: 0.8181818181818182,
+                    linesCovered: 9,
+                    linesValid: 11,
+                    version: 'Jtest 2022.2.0',
+                    packages: new Map<string, types.CoberturaPackage>([
+                        [
+                            'com.parasoft', {
+                            name: 'com.parasoft',
+                            lineRate: 1,
+                            classes: new Map<string, types.CoberturaClass>([
+                                [
+                                    'com.parasoft.Demo-src/main/java/com/parasoft/Demo.java', {
+                                    classId: 'com.parasoft.Demo-src/main/java/com/parasoft/Demo.java',
+                                    fileName: 'src/main/java/com/parasoft/Demo.java',
+                                    name: 'com.parasoft.Demo',
+                                    lineRate: 1,
+                                    coveredLines: 3,
+                                    lines: [
+                                        { lineNumber: 3, lineHash: '-1788429923', hits: 1 },
+                                        { lineNumber: 6, lineHash: '380126011', hits: 2 },
+                                        { lineNumber: 12, lineHash: '-895699689', hits: 1 }
+                                    ]
+                                }
+                                ], [
+                                    'com.parasoft.Demo#1-src/main/java/com/parasoft/Demo.java', {
+                                        classId: 'com.parasoft.Demo#1-src/main/java/com/parasoft/Demo.java',
+                                        fileName: 'src/main/java/com/parasoft/Demo.java',
+                                        name: 'com.parasoft.Demo#1',
+                                        lineRate: 1,
+                                        coveredLines: 2,
+                                        lines: [
+                                            { lineNumber: 6, lineHash: '380126011', hits: 2 },
+                                            { lineNumber: 9, lineHash: '1606603515', hits: 1 }
+                                        ]
+                                    }
+                                ]
+                            ])
+                        }], ['com.example', {
+                            name: 'com.example',
+                            lineRate: 0.6666666666666666,
+                            classes: new Map<string, types.CoberturaClass>([
+                                [
+                                    'com.example.AppA-C:/test/module-a/src/main/java/com/example/AppA.java', {
+                                        classId: 'com.example.AppA-C:/test/module-a/src/main/java/com/example/AppA.java',
+                                        fileName: 'C:/test/module-a/src/main/java/com/example/AppA.java',
+                                        name: 'com.example.AppA',
+                                        lineRate: 0.6666666666666666,
+                                        coveredLines: 2,
+                                    lines: [
+                                        { lineNumber: 3, lineHash: '1723197983', hits: 0 },
+                                        { lineNumber: 7, lineHash: '-1390516089', hits: 1 },
+                                        { lineNumber: 8, lineHash: '30537853', hits: 1 }
+                                    ]
+                                }], [
+                                    'com.example.AppB-C:/test/module-b/src/main/java/com/example/AppB.java', {
+                                        classId: 'com.example.AppB-C:/test/module-b/src/main/java/com/example/AppB.java',
+                                        fileName: 'C:/test/module-b/src/main/java/com/example/AppB.java',
+                                        name: 'com.example.AppB',
+                                        lineRate: 0.6666666666666666,
+                                        coveredLines: 2,
+                                        lines: [
+                                            { lineNumber: 3, lineHash: '1723197984', hits: 0 },
+                                            { lineNumber: 7, lineHash: '-1390516089', hits: 1 },
+                                            { lineNumber: 8, lineHash: '30537853', hits: 1 }
+                                        ]
+                                    }
+                                ]
+                            ])
+                        }]
+                    ])
+                }
+                const reportPaths = [pt.join(coberturaReportPathForTest, "coverage-cobertura.xml"), pt.join(coberturaReportPathForTest, "coverage-cobertura_multiple_modules.xml")];
 
                 const res = testRunner.mergeCoberturaReports(reportPaths);
                 res.should.eql(expectedCoverage);

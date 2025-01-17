@@ -10,7 +10,7 @@ import * as lodash from 'lodash';
 import {messages, messagesFormatter} from './messages';
 
 export interface RunOptions {
-    /* Specify a path to a folder or file for the Parasoft coverage report */
+    /* Specify a path or minimatch pattern to locate Parasoft coverage report files */
     report: string;
 
     /* Specify a path to Parasoft tool installation folder or Java installation folder */
@@ -24,7 +24,6 @@ export interface RunDetails {
 
 export class CoverageParserRunner {
     WORKING_DIRECTORY = process.env.GITHUB_WORKSPACE + '';
-    MERGED_COBERTURA_REPORT_PATH: string = pt.join(this.WORKING_DIRECTORY, 'parasoft-merged-cobertura.xml');
 
     async run(runOptions: RunOptions) : Promise<RunDetails> {
         const parasoftReportPaths = await this.findParasoftCoverageReports(runOptions.report);
@@ -204,11 +203,9 @@ export class CoverageParserRunner {
                 core.warning(messagesFormatter.format(messages.coverage_data_was_not_merged_due_to, reportPaths[i], errorMessage));
             }
         }
-
         this.updateAttributes(baseCoverage);
-        fs.writeFileSync(this.MERGED_COBERTURA_REPORT_PATH, this.processObjToXML(baseCoverage), 'utf-8');
 
-        core.debug(messagesFormatter.format(messages.merged_cobertura_reports, this.MERGED_COBERTURA_REPORT_PATH));
+        core.debug(messagesFormatter.format(messages.merged_cobertura_reports));
         return baseCoverage;
     };
 
@@ -396,33 +393,6 @@ export class CoverageParserRunner {
         coberturaCoverage.linesCovered = coveredLinesOnCoverage;
         coberturaCoverage.linesValid = coverableLinesOnCoverage;
         coberturaCoverage.lineRate = coveredLinesOnCoverage / coverableLinesOnCoverage;
-    }
-
-    private processObjToXML(coberturaReport: types.CoberturaCoverage): string {
-        let coberturaPackagesText = '';
-        for(const coberturaPackage of Array.from(coberturaReport.packages.values())) {
-            coberturaPackagesText += this.generateCoberturaPackageText(coberturaPackage);
-        }
-        return `<?xml version="1.0" encoding="UTF-8"?>` +
-            `<coverage line-rate="${coberturaReport.lineRate}" lines-covered="${coberturaReport.linesCovered}" lines-valid="${coberturaReport.linesValid}" version="${coberturaReport.version}">` +
-            `<packages>${coberturaPackagesText}</packages>` +
-            `</coverage>`;
-    }
-
-    private generateCoberturaPackageText(coberturaPackage: types.CoberturaPackage): string {
-        let coberturaClassesText = '';
-        for (const coberturaClass of Array.from(coberturaPackage.classes.values())) {
-            coberturaClassesText += this.generateCoberturaClassText(coberturaClass);
-        }
-        return `<package name="${coberturaPackage.name}" line-rate="${coberturaPackage.lineRate}"><classes>${coberturaClassesText}</classes></package>`;
-    }
-
-    private generateCoberturaClassText(coberturaClass: types.CoberturaClass): string {
-        let coberturaLinesText = '';
-        for (const coberturaLine of coberturaClass.lines) {
-            coberturaLinesText += `<line number="${coberturaLine.lineNumber}" hits="${coberturaLine.hits}" hash="${coberturaLine.lineHash}" />`
-        }
-        return `<class filename="${coberturaClass.fileName}" name="${coberturaClass.name}" line-rate="${coberturaClass.lineRate}"><lines>${coberturaLinesText}</lines></class>`;
     }
 
     private async generateCoverageSummary(coberturaCoverage: types.CoberturaCoverage) {
