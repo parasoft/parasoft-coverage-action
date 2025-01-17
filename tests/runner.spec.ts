@@ -142,8 +142,8 @@ describe('parasoft-coverage-action/runner', () => {
             ];
 
             const res = await testRunner.findParasoftCoverageReports(reportPath);
-            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPaths[0]));
-            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPaths[1]));
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage XML report: {0}', expectedReportPaths[0]));
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage XML report: {0}', expectedReportPaths[1]));
             res.length.should.equal(2);
             res.should.eql(expectedReportPaths);
         });
@@ -152,7 +152,7 @@ describe('parasoft-coverage-action/runner', () => {
             const expectedReportPath = pt.join(__dirname, "resources/reports/coverage.xml");
             const res = await testRunner.findParasoftCoverageReports('./resources/reports/coverage.xml');
 
-            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage report: {0}', expectedReportPath));
+            sinon.assert.calledWith(coreInfo, messagesFormatter.format('Found Parasoft coverage XML report: {0}', expectedReportPath));
             res.length.should.equal(1);
             res[0].should.equal(expectedReportPath);
         });
