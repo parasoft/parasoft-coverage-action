@@ -1,0 +1,52 @@
+[
+    {
+        "purl" : "pkg:npm/string-format@2.0.0",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "WTFPL",
+                    "url" : "https://spdx.org/licenses/WTFPL.html"
+                }
+            },
+            {
+                "license" : {
+                    "id" : "MIT",
+                    "url" : "http://www.opensource.org/licenses/mit-license.php"
+                }
+            }
+        ]
+    },
+    {
+        "purl" : "pkg:npm/jackspeak@4.0.2",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "BlueOak-1.0.0",
+                    "url" : "https://blueoakcouncil.org/license/1.0.0"
+                }
+            }
+        ]
+    },
+    {
+        "purl" : "pkg:npm/package-json-from-dist@1.0.1",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "BlueOak-1.0.0",
+                    "url" : "https://blueoakcouncil.org/license/1.0.0"
+                }
+            }
+        ]
+    },
+    {
+        "purl" : "pkg:npm/path-scurry@2.0.0",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "BlueOak-1.0.0",
+                    "url" : "https://blueoakcouncil.org/license/1.0.0"
+                }
+            }
+        ]
+    }
+]
