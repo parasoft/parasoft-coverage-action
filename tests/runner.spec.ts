@@ -225,12 +225,11 @@ describe('parasoft-coverage-action/runner', () => {
         it('should return converted cobertura report paths when convert parasoft report successfully', async () => {
             const testReport = pt.join(__dirname, 'resources/reports/coverage.xml');
             const expectedReport = pt.join(__dirname, 'resources/reports/coverage-cobertura.xml');
-            let spawnStub;
-            let handleProcessStub;
+            let handleProcessStub: any;
 
             // Use Sinon to mock childProcess.spawn
-            // @ts-ignore: Here is missing some properties from type, but they are not used in runner.ts
-            spawnStub = sinon.stub(cp, 'spawn').callsFake((commandLine, options) => {
+            // @ts-expect-error: Here is missing some properties from type, but they are not used in runner.ts
+            const spawnStub = sinon.stub(cp, 'spawn').callsFake(() => {
                 const mockProcess = {
                     stdout: { on: () => {} },
                     stderr: { on: () => {} },
@@ -241,7 +240,7 @@ describe('parasoft-coverage-action/runner', () => {
                     }
                 };
 
-                handleProcessStub = sinon.stub(testRunner, 'handleProcess').callsFake((process, resolve: any, reject) => {
+                handleProcessStub = sinon.stub(testRunner, 'handleProcess').callsFake((process, resolve: any) => {
                     const mockRunDetails = { exitCode: 0 };
                     resolve(mockRunDetails);
                 });

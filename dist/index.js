@@ -169,7 +169,7 @@ class CoverageParserRunner {
             let isCoverageReport = false;
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
-                if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
+                if (!isCoverageReport && node.name == 'Coverage' && Object.prototype.hasOwnProperty.call(node.attributes, 'ver')) {
                     isCoverageReport = true;
                 }
             });
@@ -187,7 +187,7 @@ class CoverageParserRunner {
         if (!reportPaths.length) {
             return undefined;
         }
-        let baseReportPath = reportPaths[0];
+        const baseReportPath = reportPaths[0];
         core.debug(messages_1.messagesFormatter.format(messages_1.messages.using_cobertura_report_as_base_report, baseReportPath));
         let baseCoverage = this.processXMLToObj(baseReportPath);
         for (let i = 1; i < reportPaths.length; i++) {
@@ -211,7 +211,6 @@ class CoverageParserRunner {
         core.debug(messages_1.messagesFormatter.format(messages_1.messages.merged_cobertura_reports));
         return baseCoverage;
     }
-    ;
     processXMLToObj(reportPath) {
         const xml = fs.readFileSync(reportPath, 'utf8');
         const coberturaCoverage = {
@@ -363,7 +362,6 @@ class CoverageParserRunner {
     sortLines(coberturaClass) {
         coberturaClass.lines.sort((line1, line2) => { return line1.lineNumber - line2.lineNumber; });
     }
-    ;
     /**
      * Recalculation for attribute values like 'lineRate','lines-valid','lines-covered' on <coverage>, <package> and <class>
      */
