@@ -164,7 +164,7 @@ export class CoverageParserRunner {
             let isCoverageReport = false;
             const saxStream = sax.createStream(true, {});
             saxStream.on("opentag", (node) => {
-                if (!isCoverageReport && node.name == 'Coverage' && node.attributes.hasOwnProperty('ver')) {
+                if (!isCoverageReport && node.name == 'Coverage' && Object.prototype.hasOwnProperty.call(node.attributes, 'ver')) {
                     isCoverageReport = true;
                 }
             });
@@ -184,7 +184,7 @@ export class CoverageParserRunner {
             return undefined;
         }
 
-        let baseReportPath: string = reportPaths[0];
+        const baseReportPath: string = reportPaths[0];
         core.debug(messagesFormatter.format(messages.using_cobertura_report_as_base_report, baseReportPath));
 
         let baseCoverage = this.processXMLToObj(baseReportPath);
@@ -207,7 +207,7 @@ export class CoverageParserRunner {
 
         core.debug(messagesFormatter.format(messages.merged_cobertura_reports));
         return baseCoverage;
-    };
+    }
 
     private processXMLToObj(reportPath: string): types.CoberturaCoverage {
         const xml = fs.readFileSync(reportPath, 'utf8');
@@ -364,7 +364,7 @@ export class CoverageParserRunner {
 
     private sortLines(coberturaClass: types.CoberturaClass): void {
         coberturaClass.lines.sort((line1, line2) => {return line1.lineNumber - line2.lineNumber});
-    };
+    }
 
     /**
      * Recalculation for attribute values like 'lineRate','lines-valid','lines-covered' on <coverage>, <package> and <class>
