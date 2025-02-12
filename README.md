@@ -35,7 +35,7 @@ Once the action is complete, the coverage results will be shown as a GitHub job 
     # Path or minimatch pattern to locate Parasoft coverage report files. If using a relative path, it is relative to the GitHub workspace directory.
     report: '**/coverage.xml'
     # Root path to the Parasoft tool or Java installation required to locate the Java environment for report processing. If not specified, the GitHub Action will attempt to use the path from the JAVA_HOME environment variable.
-    parasoftToolOrJavaRootPath: 'path/to/java';
+    parasoftToolOrJavaRootPath: 'path/to/java'
 ```
 
 ## Example Workflows
@@ -91,7 +91,7 @@ jobs:
             # Path or minimatch pattern to locate Parasoft coverage report files. If using a relative path, it is relative to the GitHub workspace directory.
             report: '**/coverage.xml'
             # Root path to the Parasoft tool or Java installation required to locate the Java environment for report processing. If not specified, the GitHub Action will attempt to use the path from the JAVA_HOME environment variable.
-            parasoftToolOrJavaRootPath: 'path/to/java';
+            parasoftToolOrJavaRootPath: 'path/to/java'
 ```
 
 ## Action Parameters
