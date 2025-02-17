@@ -1,4 +1,4 @@
-name: 'Deploy coverage report results'
+name: 'Parasoft Coverage Action'
 description: 'A GitHub Action for viewing the results of Parasoft coverage report on GitHub.'
 author: 'Parasoft'
 branding:
