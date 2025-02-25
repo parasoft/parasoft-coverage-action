@@ -58,6 +58,6 @@
     "string-format": "^2.0.0"
   },
   "overrides": {
-    "undici": "6.6.1"
+    "undici": "6.12.0"
   }
 }
