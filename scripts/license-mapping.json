@@ -17,7 +17,7 @@
         ]
     },
     {
-        "purl" : "pkg:npm/jackspeak@4.0.2",
+        "purl" : "pkg:npm/jackspeak@4.1.1",
         "licenses" : [
             {
                 "license" : {
@@ -40,6 +40,28 @@
     },
     {
         "purl" : "pkg:npm/path-scurry@2.0.0",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "BlueOak-1.0.0",
+                    "url" : "https://blueoakcouncil.org/license/1.0.0"
+                }
+            }
+        ]
+    },
+    {
+        "purl" : "pkg:npm/glob@11.1.0",
+        "licenses" : [
+            {
+                "license" : {
+                    "id" : "BlueOak-1.0.0",
+                    "url" : "https://blueoakcouncil.org/license/1.0.0"
+                }
+            }
+        ]
+    },
+    {
+        "purl" : "pkg:npm/minimatch@10.1.1",
         "licenses" : [
             {
                 "license" : {
