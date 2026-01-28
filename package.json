@@ -51,7 +51,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
+    "@actions/core": "^2.0.3",
     "copyfiles": "^2.4.1",
     "glob": "^11.0.0",
     "sax": "^1.4.1",
