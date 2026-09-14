@@ -1,6 +1,6 @@
 {
   "name": "parasoft-coverage-action",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "description": "A GitHub Action for viewing the results of Parasoft coverage report on GitHub.",
   "main": "lib/main.js",
