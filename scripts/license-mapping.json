@@ -72,7 +72,7 @@
         ]
     },
     {
-        "purl" : "pkg:npm/minimatch@10.2.5",
+        "purl" : "pkg:npm/minimatch@10.2.6",
         "licenses" : [
             {
                 "license" : {
@@ -83,7 +83,7 @@
         ]
     },
     {
-        "purl" : "pkg:npm/lru-cache@11.5.1",
+        "purl" : "pkg:npm/lru-cache@11.5.2",
         "licenses" : [
             {
                 "license" : {
@@ -94,7 +94,7 @@
         ]
     },
     {
-        "purl" : "pkg:npm/sax@1.4.4",
+        "purl" : "pkg:npm/sax@1.6.1",
         "licenses" : [
             {
                 "license" : {
