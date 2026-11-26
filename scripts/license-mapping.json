@@ -61,7 +61,7 @@
         ]
     },
     {
-        "purl" : "pkg:npm/glob@13.0.6",
+        "purl" : "pkg:npm/glob@13.0.7",
         "licenses" : [
             {
                 "license" : {
